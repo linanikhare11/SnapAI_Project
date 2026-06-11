@@ -1,0 +1,3244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapAI — Your Event Photos</title>
+  <script>
+    (function() {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+  <style>
+    :root {
+      --bg-dark: #080914;
+      --bg-mid: #14152a;
+      --gold: #8f6bff;
+      --brand-rgb: 96, 122, 255;
+      --brand-gradient: linear-gradient(90deg, #6c7dff, #a35bff);
+      --white: #eef0ff;
+      --white-60: rgba(238, 240, 255, 0.68);
+      --card-bg: rgba(20, 21, 44, 0.88);
+      --border: rgba(148, 120, 255, 0.28);
+      --radius: 20px;
+    }
+
+    html[data-theme='light'] {
+      --bg-dark: #f8f9fc;
+      --bg-mid: #eef1f6;
+      --gold: #2f3d5a;
+      --brand-rgb: 79, 110, 247;
+      --brand-gradient: linear-gradient(90deg, #5f72ff, #4b60ee);
+      --white: #1f2a44;
+      --white-60: rgba(31, 42, 68, 0.7);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --border: rgba(31, 42, 68, 0.14);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 18% 14%, rgba(78, 97, 255, 0.2) 0%, transparent 38%),
+                  radial-gradient(circle at 85% 10%, rgba(174, 86, 255, 0.18) 0%, transparent 42%),
+                  linear-gradient(135deg, #080914 0%, #12132a 45%, #1b1040 100%);
+      color: var(--white);
+      font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    html[data-theme='light'],
+    html[data-theme='light'] body {
+      background:
+        radial-gradient(ellipse 75% 45% at 50% -10%, rgba(79, 110, 247, 0.08) 0%, transparent 58%),
+        linear-gradient(135deg, #f9fbff 0%, #f2f4f9 52%, #ffffff 100%);
+      color: var(--white);
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      max-width: 1400px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 1.2rem;
+      left: 1.2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 15, 25, 0.8);
+      color: var(--white);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    html[data-theme='light'] .back-btn,
+    html[data-theme='light'] .close-viewer-btn,
+    html[data-theme='light'] .results-close-btn {
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--white);
+      border-color: rgba(70, 83, 120, 0.16);
+    }
+
+    .back-btn:hover {
+      background: rgba(15, 15, 25, 0.95);
+      box-shadow: 0 6px 16px rgba(var(--brand-rgb), 0.2);
+      transform: translateY(-1px);
+    }
+
+    .photographer-btn {
+      position: fixed;
+      top: 1.2rem;
+      right: 1.2rem;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(var(--brand-rgb), 0.4);
+    }
+
+    .photographer-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.6);
+    }
+
+    /* Photographer Profile Modal */
+    .photographer-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      flex-direction: column;
+      z-index: 8000;
+      backdrop-filter: blur(10px);
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 4.2rem 0 0;
+    }
+
+    html[data-theme='light'] .photographer-modal {
+      background: rgba(229, 240, 248, 0.96);
+    }
+
+    .photographer-modal.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .photographer-tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid rgba(var(--brand-rgb), 0.3);
+      background: rgba(10, 10, 20, 0.6);
+      padding: 0 0 0 62px;
+      margin-top: 0.4rem;
+      min-height: 52px;
+      z-index: 8001;
+    }
+
+    html[data-theme='light'] .photographer-tab-nav,
+    html[data-theme='light'] .photographer-tabs {
+      background: rgba(236, 245, 251, 0.9);
+      border-bottom-color: rgba(111, 99, 255, 0.26);
+    }
+
+    .photographer-modal-header {
+      position: relative;
+      width: auto;
+      height: auto;
+      background: transparent;
+      border-bottom: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 1rem 1.5rem 0 0;
+      z-index: 8001;
+    }
+
+    .photographer-modal-title {
+      position: absolute;
+      width: 100%;
+      top: 1.5rem;
+      left: 0;
+      text-align: center;
+      color: var(--gold);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: none;
+      pointer-events: none;
+    }
+
+    .photographer-modal-close {
+      position: absolute;
+      top: 1.2rem;
+      right: 1.2rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(var(--brand-rgb), 0.3);
+      background: rgba(15, 15, 25, 0.9);
+      color: var(--white);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 8002;
+    }
+
+    .photographer-modal-close:hover {
+      background: rgba(15, 15, 25, 0.95);
+      border-color: var(--gold);
+      transform: scale(1.1);
+    }
+
+    .photographer-tabs {
+      display: flex;
+      gap: 0;
+      margin-top: 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,20,0.55);
+      padding: 0.35rem 0.35rem 0 0.35rem;
+    }
+
+    .photographer-tab {
+      flex: 1;
+      padding: 0.95rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--white-60);
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.25;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      text-transform: none;
+      letter-spacing: 0.01em;
+      border-radius: 14px 14px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+    }
+
+    .photographer-tab:hover {
+      color: var(--white);
+      background: rgba(var(--brand-rgb), 0.05);
+    }
+
+    .photographer-tab.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+      background: rgba(var(--brand-rgb), 0.08);
+    }
+
+    .photographer-modal-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 1.5rem;
+      display: none;
+    }
+
+    .photographer-modal-content.active {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .photographer-info-card {
+      background: linear-gradient(135deg, rgba(18,19,36,0.96) 0%, rgba(12,13,28,0.98) 100%);
+      border: 1px solid rgba(var(--brand-rgb), 0.28);
+      border-radius: 24px;
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      max-width: 560px;
+      width: 100%;
+      margin: 0 auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(var(--brand-rgb),0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .photographer-info-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(var(--brand-rgb),0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Photographer Avatar */
+    .photographer-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: var(--brand-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 auto 1rem;
+      border: 3px solid rgba(var(--brand-rgb), 0.5);
+      box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.35);
+      position: relative;
+      z-index: 1;
+    }
+
+    .photographer-verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.85rem;
+      background: rgba(var(--brand-rgb), 0.12);
+      border: 1px solid rgba(var(--brand-rgb), 0.3);
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Contact row items */
+    .contact-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: rgba(var(--brand-rgb), 0.06);
+      border: 1px solid rgba(var(--brand-rgb), 0.12);
+      border-radius: 12px;
+      margin-bottom: 0.6rem;
+      text-align: left;
+      transition: background 0.2s;
+    }
+
+    .contact-row:hover {
+      background: rgba(var(--brand-rgb), 0.1);
+    }
+
+    .contact-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(var(--brand-rgb), 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .contact-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--white-60);
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 0.18rem;
+    }
+
+    .contact-value {
+      font-size: 0.9rem;
+      color: var(--white);
+      font-weight: 500;
+      word-break: break-all;
+    }
+
+    html[data-theme='light'] .photographer-info-card,
+    html[data-theme='light'] .pin-card,
+    html[data-theme='light'] .face-search-card,
+    html[data-theme='light'] .photo-viewer-container,
+    html[data-theme='light'] .face-search-results {
+      background: rgba(248, 251, 255, 0.95);
+      color: var(--white);
+    }
+
+    html[data-theme='light'] .photo-viewer-modal,
+    html[data-theme='light'] .face-search-results {
+      background: linear-gradient(135deg, #eef3ff 0%, #f8fbff 100%);
+    }
+
+    html[data-theme='light'] #content {
+      background: linear-gradient(180deg, rgba(245, 247, 252, 0.96) 0%, rgba(255, 255, 255, 1) 100%);
+    }
+
+    html[data-theme='light'] .header {
+      color: var(--white);
+    }
+
+    html[data-theme='light'] .badge {
+      background: rgba(111, 99, 255, 0.12);
+      border-color: rgba(111, 99, 255, 0.3);
+      color: var(--gold);
+    }
+
+    html[data-theme='light'] .header p,
+    html[data-theme='light'] .meta,
+    html[data-theme='light'] .photo-count,
+    html[data-theme='light'] .subtitle,
+    html[data-theme='light'] .pin-card p,
+    html[data-theme='light'] .face-search-card p {
+      color: rgba(31, 42, 68, 0.72);
+    }
+
+    html[data-theme='light'] .results-header h2,
+    html[data-theme='light'] .photographer-info-card h2,
+    html[data-theme='light'] .photo-viewer-controls,
+    html[data-theme='light'] .pin-card h3,
+    html[data-theme='light'] .face-search-card h3 {
+      color: var(--white);
+    }
+
+    html[data-theme='light'] .card,
+    html[data-theme='light'] .photo-item,
+    html[data-theme='light'] .results-grid .photo-item {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(31, 42, 68, 0.12);
+      box-shadow: 0 10px 28px rgba(31, 42, 68, 0.08);
+    }
+
+    html[data-theme='light'] .photo-viewer-image {
+      border-color: rgba(111, 99, 255, 0.28);
+    }
+
+    html[data-theme='light'] .download-all-btn,
+    html[data-theme='light'] .viewer-btn,
+    html[data-theme='light'] .btn,
+    html[data-theme='light'] .photo-btn {
+      color: #ffffff;
+    }
+
+    html[data-theme='light'] .back-btn {
+      box-shadow: 0 8px 20px rgba(111, 99, 255, 0.22);
+    }
+
+    html[data-theme='light'] .photographer-btn {
+      color: #ffffff;
+      box-shadow: 0 10px 24px rgba(79, 110, 247, 0.28);
+    }
+
+    html[data-theme='light'] .main-title span {
+      background: linear-gradient(90deg, #1f2a44 0%, #4b60ee 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    html[data-theme='light'] .card:hover {
+      background: rgba(248, 250, 255, 1);
+      border-color: rgba(79, 110, 247, 0.35);
+      box-shadow: 0 16px 36px rgba(79, 110, 247, 0.16);
+    }
+
+    html[data-theme='light'] .badge,
+    html[data-theme='light'] .download-all-btn,
+    html[data-theme='light'] .back-link {
+      background: rgba(79, 110, 247, 0.08);
+      border-color: rgba(79, 110, 247, 0.2);
+      color: #2f3d5a;
+    }
+
+    .photographer-info-card h2 {
+      font-size: 1.6rem;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 0.25rem;
+      color: var(--white);
+    }
+
+    .photographer-info-card > p {
+      color: var(--white-60);
+      margin: 0 0 1.25rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .photographer-info-section {
+      background: rgba(var(--brand-rgb), 0.06);
+      border: 1px solid rgba(var(--brand-rgb), 0.18);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .photographer-info-section h3 {
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 2rem 1.5rem 1rem;
+      background: linear-gradient(180deg, rgba(8,10,22,0.5) 0%, rgba(4,5,14,0.7) 100%);
+    }
+
+    #content::-webkit-scrollbar { width: 6px; }
+    #content::-webkit-scrollbar-track { background: transparent; }
+    #content::-webkit-scrollbar-thumb { background: rgba(var(--brand-rgb), 0.3); border-radius: 10px; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(var(--brand-rgb), 0.1);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--gold);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 0 20px rgba(var(--brand-rgb), 0.2);
+    }
+
+    .photographer {
+      color: var(--white-60);
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+      font-weight: 500;
+    }
+
+    .main-title {
+      font-size: clamp(2.2rem, 8vw, 5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.02em;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .main-title span {
+      background: linear-gradient(90deg, #f5f7ff 0%, #7ee2ff 45%, #ab7cff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .event-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      color: var(--white-60);
+      font-size: 0.95rem;
+      margin-top: 0.8rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 2rem auto 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(var(--brand-rgb), 0.3);
+      border-radius: var(--radius);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: var(--gold);
+      background: rgba(34, 24, 66, 0.95);
+      box-shadow: 0 20px 40px rgba(120, 92, 255, 0.35);
+    }
+
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .card-desc {
+      color: var(--white-60);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1.2rem;
+    }
+
+    .card-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 100px;
+      border: 1px solid rgba(var(--brand-rgb), 0.4);
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: auto;
+      transition: all 0.3s ease;
+    }
+
+    .card-btn:hover {
+      box-shadow: 0 8px 20px rgba(var(--brand-rgb), 0.3);
+      transform: translateY(-2px);
+    }
+
+    .card.gallery-card .card-btn {
+      background: linear-gradient(90deg, #2fcbff, #6c7dff);
+      color: #fff;
+      border-color: rgba(47, 203, 255, 0.45);
+    }
+
+    .card.gallery-card .card-btn:hover {
+      box-shadow: 0 8px 20px rgba(47, 203, 255, 0.35);
+    }
+
+    #gallery-section {
+      display: none;
+      margin-top: 2rem;
+    }
+
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .gallery-header h2 {
+      font-size: 1.4rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .back-link {
+      background: rgba(var(--brand-rgb), 0.1);
+      border: 1px solid var(--border);
+      color: var(--gold);
+      padding: 0.5rem 1rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+
+    .back-link:hover {
+      background: rgba(var(--brand-rgb), 0.2);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1rem;
+      min-height: 200px;
+    }
+
+    .photo-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(var(--brand-rgb), 0.15);
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .photo-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 12px;
+    }
+
+    .photo-item:hover .photo-overlay {
+      opacity: 1;
+    }
+
+    .photo-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      padding: 0.5rem 0.8rem;
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+
+    .photo-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.4);
+    }
+
+    .download-btn {
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      border-color: rgba(var(--brand-rgb), 0.4);
+    }
+
+    .download-btn:hover {
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.4);
+    }
+
+    .photo-watermark {
+      position: absolute;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.4);
+      color: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(var(--brand-rgb), 0.5);
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.45rem;
+      max-width: 80%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      user-select: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    .viewer-watermark {
+      position: absolute;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.45);
+      color: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(var(--brand-rgb), 0.55);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.28rem 0.6rem;
+      max-width: calc(100% - 2rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      user-select: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    .gallery-header-actions {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .download-all-btn {
+      background: rgba(var(--brand-rgb), 0.1);
+      border: 1px solid var(--border);
+      color: var(--gold);
+      padding: 0.5rem 1rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .download-all-btn:hover {
+      background: rgba(var(--brand-rgb), 0.2);
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.2);
+      transform: translateY(-1px);
+    }
+
+    /* Photo Viewer Modal */
+    .photo-viewer-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9002;
+      backdrop-filter: blur(5px);
+      padding: 2rem;
+    }
+
+    .photo-viewer-modal.active {
+      display: flex;
+      z-index: 9002;
+    }
+
+    .photo-viewer-container {
+      position: relative;
+      max-width: 90vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .photo-viewer-image {
+      max-width: 100%;
+      max-height: 75vh;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      border: 2px solid rgba(var(--brand-rgb), 0.3);
+    }
+
+    .photo-viewer-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .close-viewer-btn {
+      position: fixed;
+      top: 1.05rem;
+      right: 5.4rem;
+      background: rgba(15, 15, 25, 0.9);
+      border: 1px solid rgba(var(--brand-rgb), 0.42);
+      color: var(--white);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 10005;
+    }
+
+    .close-viewer-btn:hover {
+      background: rgba(15, 15, 25, 0.95);
+      border-color: var(--gold);
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.2);
+    }
+
+    .viewer-btn {
+      padding: 0.7rem 1.4rem;
+      border-radius: 100px;
+      border: none;
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .viewer-btn:hover {
+      box-shadow: 0 8px 20px rgba(var(--brand-rgb), 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* PAGINATION BUTTONS STYLING */
+    .pagination-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 3rem;
+      gap: 2rem;
+      padding: 2.5rem;
+      background: rgba(var(--brand-rgb), 0.08);
+      border: 1px solid rgba(var(--brand-rgb), 0.2);
+      border-radius: 16px;
+      flex-wrap: wrap;
+    }
+
+    .pagination-wrapper.hidden {
+      display: none !important;
+    }
+
+    .btn-see-more-less {
+      padding: 0.9rem 2.5rem;
+      border-radius: 100px;
+      border: 2px solid var(--gold);
+      background: linear-gradient(135deg, var(--gold) 0%, rgba(var(--brand-rgb), 0.72) 100%);
+      color: #1a1a2e;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.3);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .btn-see-more-less:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(var(--brand-rgb), 0.5);
+    }
+
+    .btn-see-more-less:active {
+      transform: translateY(-1px);
+    }
+
+    .btn-see-more-less.hidden {
+      display: none !important;
+    }
+
+    .photo-count-text {
+      color: var(--gold);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-align: center;
+      min-width: 200px;
+    }
+
+    /* PIN Modal */
+    .pin-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(4px);
+    }
+
+    .pin-modal.active {
+      display: flex;
+    }
+
+    .pin-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .pin-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .pin-card p {
+      color: var(--white-60);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(10, 10, 20, 0.8);
+      color: var(--white);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      font-family: monospace;
+    }
+
+    .pin-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(var(--brand-rgb), 0.3);
+    }
+
+    .pin-btn {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 100px;
+      border: none;
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pin-btn:hover {
+      box-shadow: 0 8px 20px rgba(var(--brand-rgb), 0.3);
+      transform: translateY(-2px);
+    }
+
+    .pin-error {
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      margin-top: 0.8rem;
+      min-height: 1rem;
+    }
+
+    .face-search-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      backdrop-filter: blur(4px);
+      padding: 1rem;
+    }
+
+    .face-search-modal.active {
+      display: flex;
+    }
+
+    .face-search-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      max-height: 95vh;
+      overflow-y: auto;
+    }
+
+    .face-search-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.6rem;
+      font-family: 'Playfair Display', serif;
+      color: var(--gold);
+    }
+
+    .face-search-card p {
+      color: var(--white-60);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+
+    .camera-preview {
+      width: 100%;
+      height: 180px;
+      background: #000;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .camera-preview::before {
+      content: '📷';
+      font-size: 3rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
+      z-index: 1;
+      opacity: 0.6;
+    }
+
+    .camera-preview::after {
+      content: 'Camera ready';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, 20%);
+      color: var(--white-60);
+      font-size: 0.9rem;
+      z-index: 1;
+      opacity: 0.6;
+    }
+
+    .camera-preview.active::before,
+    .camera-preview.active::after {
+      display: none;
+    }
+
+    .camera-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .camera-preview.active video {
+      display: block;
+    }
+
+    .face-search-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+      margin: 1rem 0;
+    }
+
+    .face-btn {
+      padding: 0.65rem;
+      border-radius: 100px;
+      border: none;
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .face-btn:hover {
+      box-shadow: 0 8px 20px rgba(var(--brand-rgb), 0.3);
+      transform: translateY(-2px);
+    }
+
+    .face-btn-secondary {
+      background: rgba(var(--brand-rgb), 0.1);
+      border: 1px solid var(--border);
+      color: var(--gold);
+    }
+
+    .face-btn-secondary:hover {
+      background: rgba(var(--brand-rgb), 0.2);
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.2);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: none;
+      width: 100%;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      display: none;
+    }
+
+    .consent-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+      padding: 0.7rem;
+      background: rgba(var(--brand-rgb), 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .consent-checkbox input[type="checkbox"] {
+      margin-top: 0.2rem;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      cursor: pointer;
+      accent-color: var(--gold);
+    }
+
+    .consent-checkbox label {
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1.3;
+      color: var(--white-60);
+    }
+
+    .face-search-results {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(8,10,22,0.95) 0%, rgba(4,5,14,0.99) 100%);
+      z-index: 250;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .face-search-results.active {
+      display: block;
+    }
+
+    .results-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      position: sticky;
+      top: 0;
+      padding-bottom: 1rem;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .results-header-content {
+      text-align: center;
+    }
+
+    .results-header h2 {
+      font-size: 1.8rem;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 0.5rem;
+    }
+
+    .results-header p {
+      color: var(--white-60);
+      font-size: 0.95rem;
+    }
+
+    .results-header-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .results-close-btn {
+      position: fixed;
+      top: 1.2rem;
+      right: 100px;
+      background: rgba(15, 15, 25, 0.9);
+      border: 1px solid rgba(var(--brand-rgb), 0.2);
+      color: var(--white);
+      padding: 0;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.5rem;
+      z-index: 9998;
+      transition: all 0.3s ease;
+    }
+
+    .results-close-btn:hover {
+      background: rgba(15, 15, 25, 0.95);
+      border-color: var(--gold);
+      box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.2);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(var(--brand-rgb), 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error Screen */
+    .error-screen {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error-screen.active {
+      display: flex;
+    }
+
+    .error-screen h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .error-screen p {
+      color: var(--white-60);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    .error-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 100px;
+      border: none;
+      background: var(--brand-gradient);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .main-title {
+        font-size: clamp(1.8rem, 6vw, 2.8rem);
+      }
+
+      .event-info {
+        gap: 1rem;
+        font-size: 0.85rem;
+      }
+
+      #content {
+        padding: 1rem 1rem 1rem;
+      }
+
+      .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+
+      .pagination-wrapper {
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1.5rem;
+      }
+
+      .btn-see-more-less {
+        width: 100%;
+      }
+
+      .photo-count-text {
+        min-width: auto;
+      }
+
+      .photographer-tab-nav {
+        padding-left: 58px;
+        margin-top: 0.35rem;
+        min-height: 48px;
+      }
+
+      .photographer-tab {
+        font-size: 0.86rem;
+        min-height: 48px;
+        padding: 0.8rem 0.7rem;
+      }
+
+      .face-search-results {
+        padding: 1.15rem 1rem 1.25rem;
+      }
+
+      .results-header {
+        margin-bottom: 1.2rem;
+        gap: 0.9rem;
+        padding: 0.25rem 3rem 0.7rem 0.25rem;
+      }
+
+      .results-header h2 {
+        font-size: 1.45rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .results-header p {
+        font-size: 0.88rem;
+      }
+
+      .results-header-buttons {
+        gap: 0.6rem;
+      }
+
+      .download-all-btn {
+        font-size: 0.8rem;
+        padding: 0.45rem 0.85rem;
+      }
+
+      .results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .results-close-btn {
+        top: 0.9rem;
+        right: 1.2rem;
+        width: 40px;
+        height: 40px;
+        font-size: 1.3rem;
+      }
+
+      .close-viewer-btn {
+        top: 0.9rem;
+        right: 4.8rem;
+        width: 38px;
+        height: 38px;
+        font-size: 1.3rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .photographer-modal {
+        padding-top: 3.7rem;
+      }
+
+      .photographer-tab-nav {
+        padding-left: 52px;
+        margin-top: 0.3rem;
+        min-height: 44px;
+      }
+
+      .photographer-tab {
+        font-size: 0.72rem;
+        line-height: 1.2;
+        min-height: 44px;
+        padding: 0.65rem 0.45rem;
+      }
+
+      .face-search-results {
+        padding: 0.9rem 0.7rem 1rem;
+      }
+
+      .results-header {
+        margin-bottom: 0.9rem;
+        gap: 0.55rem;
+        padding: 0.15rem 2.7rem 0.55rem 0.1rem;
+      }
+
+      .results-header h2 {
+        font-size: 1.18rem;
+        margin-bottom: 0.2rem;
+      }
+
+      .results-header p {
+        font-size: 0.78rem;
+      }
+
+      .results-header-buttons {
+        width: 100%;
+      }
+
+      .download-all-btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.76rem;
+        padding: 0.45rem 0.6rem;
+      }
+
+      .results-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.62rem;
+      }
+
+      .results-grid > * {
+        min-width: 0;
+      }
+
+      .results-close-btn {
+        top: 0.75rem;
+        right: 1rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1.12rem;
+      }
+
+      .close-viewer-btn {
+        top: 0.75rem;
+        right: 4.25rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1.12rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="handleBackNavigation()">←</button>
+  <button class="photographer-btn" id="photographer-btn" onclick="openPhotographerModal()"></button>
+
+  <!-- Photographer Modal -->
+  <div class="photographer-modal" id="photographer-modal">
+    <!-- Tab Navigation -->
+    <div class="photographer-tab-nav">
+      <button class="photographer-tab active" onclick="switchPhotographerTab('about')">About the Photographer</button>
+      <button class="photographer-tab" onclick="switchPhotographerTab('photography')">Photography Portfolio</button>
+    </div>
+
+    <!-- Tab 1: About Photographer -->
+    <div class="photographer-modal-content active" id="tab-about">
+      <div class="photographer-info-card" id="photographer-info">
+        <button class="photographer-modal-close" onclick="closePhotographerModal()">✕</button>
+        <h2 style="margin-top: 0; margin-bottom: 1.5rem; color: var(--gold); font-family: 'Playfair Display', serif;">Photographer Information</h2>
+        <h2 id="photographer-name">Photographer</h2>
+        <p id="photographer-bio" style="color: var(--white-60); font-size: 0.95rem;">Professional photographer specializing in capturing moments.</p>
+        <div class="photographer-info-section">
+          <h3>Contact Details</h3>
+          <p id="photographer-email" style="margin: 0;">Email: photographer@example.com</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Photography Portfolio -->
+    <div class="photographer-modal-content" id="tab-photography">
+      <div style="max-width: 700px; margin: 0 auto; background: linear-gradient(180deg, rgba(20,20,35,0.92) 0%, rgba(16,16,28,0.95) 100%); border: 1px solid rgba(212,175,85,0.22); border-radius: 22px; padding: 2rem; position: relative;">
+        <button class="photographer-modal-close" onclick="closePhotographerModal()">✕</button>
+        <h2 style="text-align: center; margin-bottom: 1.5rem; font-family: 'Playfair Display', serif; color: var(--gold);">Photography Portfolio</h2>
+        <div class="photographer-info-section">
+          <h3>Photography Styles</h3>
+          <p id="photography-types" style="margin: 0;">Wedding • Birthday • Party • Events</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="content">
+      <!-- Header -->
+      <div class="header" id="header">
+        <div class="badge">📸 POWERED BY AI FACE RECOGNITION</div>
+        <div class="photographer" id="photographer">Photography by Photographer</div>
+        <h1 class="main-title"><span id="event-name">Event</span> <span id="event-name-suffix">Gallery</span></h1>
+        <div class="event-info">
+          <span id="event-date">📅 Date TBD</span>
+          <span id="photo-count">🖼 0 photos</span>
+        </div>
+      </div>
+
+      <!-- Cards Grid -->
+      <div class="cards-grid" id="cards-grid">
+        <div class="card" onclick="openFaceSearch()">
+          <div class="card-icon">🤳</div>
+          <h2 class="card-title">Find My Photos</h2>
+          <p class="card-desc">AI instantly finds every photo you appear in</p>
+          <button class="card-btn">AI Powered</button>
+        </div>
+
+        <div class="card gallery-card" onclick="showAllPhotos()">
+          <div class="card-icon">🖼️</div>
+          <h2 class="card-title">View All Photos</h2>
+          <p class="card-desc">Browse the complete event gallery</p>
+          <button class="card-btn">Full Collection</button>
+        </div>
+      </div>
+
+      <!-- Gallery Section -->
+      <section id="gallery-section">
+        <div class="gallery-header">
+          <h2>Event Gallery</h2>
+          <div class="gallery-header-actions">
+            <button class="download-all-btn" onclick="downloadAllPhotos()" title="Download all photos as ZIP">⬇️ Download All</button>
+            <button class="back-link" onclick="backToOptions()">← Back</button>
+          </div>
+        </div>
+        <div class="photo-grid" id="photo-grid"></div>
+        
+        <!-- PAGINATION CONTROLS -->
+        <div class="pagination-wrapper" id="pagination-wrapper">
+          <button class="btn-see-more-less" id="btn-toggle-photos" onclick="toggleViewGallery()">📸 See More Photos</button>
+          <div class="photo-count-text" id="photo-count-text">Showing 0 of 0 photos</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Error Screen -->
+    <div class="error-screen" id="error-screen">
+      <h2>Event Unavailable</h2>
+      <p id="error-text">Unable to load this event. Please try again or return to dashboard.</p>
+      <button class="error-btn" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <!-- PIN Modal -->
+  <div class="pin-modal" id="pin-modal">
+    <div class="pin-card">
+      <h3>Private Event</h3>
+      <p>Enter the access PIN to continue</p>
+      <input type="password" class="pin-input" id="pin-input" maxlength="6" placeholder="Enter PIN" onkeydown="handlePinKeyPress(event)" />
+      <button class="pin-btn" onclick="submitPin()">Unlock</button>
+      <div class="pin-error" id="pin-error"></div>
+    </div>
+  </div>
+
+  <!-- Face Search Modal -->
+  <div class="face-search-modal" id="face-search-modal">
+    <div class="face-search-card">
+      <button onclick="closeFaceSearch()" style="position: absolute; top: 1.5rem; right: 100px; background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; background: rgba(15, 15, 25, 0.9);">✕</button>
+      
+      <h3>🤳 Find My Photos</h3>
+      <p>Upload a selfie and AI will find every photo you appear in</p>
+      
+      <div class="camera-preview" id="camera-preview">
+        <video id="video" playsinline autoplay></video>
+      </div>
+
+      <div class="face-search-buttons">
+        <button class="face-btn face-btn-secondary" id="camera-btn" onclick="startCamera()">📷 Camera</button>
+        <button class="face-btn face-btn-secondary" id="upload-btn" onclick="triggerFileUpload()">📁 Upload</button>
+      </div>
+
+      <div class="file-input-wrapper">
+        <input type="file" id="selfie-file" accept="image/*" onchange="handleFileSelect(event)" />
+      </div>
+
+      <div class="consent-checkbox">
+        <input type="checkbox" id="consent-check" />
+        <label for="consent-check">
+          I consent to my photo being analyzed using AI facial recognition. My selfie will not be stored permanently.
+        </label>
+      </div>
+
+      <button class="face-btn" id="submit-btn" onclick="submitSelfie()" style="width: 100%; padding: 0.6rem; margin: 0.8rem 0 0.5rem 0;">Find My Photos</button>
+      
+      <div id="face-error" style="color: #ff6b6b; font-size: 0.75rem; margin-top: 0.3rem; min-height: 0.8rem;"></div>
+    </div>
+  </div>
+
+  <!-- Face Search Results -->
+  <div class="face-search-results" id="face-search-results">
+    <div class="results-header">
+      <div class="results-header-content">
+        <h2>Photos Found</h2>
+        <p id="results-info">Searching for your photos...</p>
+      </div>
+      <div class="results-header-buttons">
+        <button class="download-all-btn" onclick="downloadAllPhotos()" title="Download all photos">⬇️ Download All</button>
+      </div>
+    </div>
+    <div class="results-grid" id="results-grid"></div>
+  </div>
+
+  <!-- Photo Viewer Modal -->
+  <div class="photo-viewer-modal" id="photo-viewer-modal">
+    <button class="close-viewer-btn" onclick="closePhotoViewer()">✕</button>
+    <div class="photo-viewer-container">
+      <img id="viewer-image" class="photo-viewer-image" src="" alt="Photo" />
+      <div class="photo-viewer-controls">
+        <button class="viewer-btn" onclick="downloadCurrentPhoto()">⬇️ Download Photo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+
+    const slug = window.location.pathname.split('/gallery/')[1];
+    let eventData = null;
+    let photographerData = null;
+    let currentPin = '';
+    let allPhotos = [];
+    let PHOTOS_PER_LOAD = 8;
+    let isGalleryExpanded = false;
+    let photosDisplayed = 0;
+    let currentViewerPhoto = null;  // For storing currently viewed photo
+    let galleryReturnToResults = false;
+    let galleryLightboxActive = false;
+    let faceAutoScanPending = false;
+    let faceScanInterval = null;
+    let faceScanWarmupTimer = null;
+    let faceStableFrames = 0;
+    let faceDetector = null;
+    let faceScanBusy = false;
+    let faceScanStartedAt = 0;
+    const REQUEST_TIMEOUT_MS = 10000;  // 10 second timeout
+    const FACE_SCAN_WARMUP_MS = 2200;
+    const FACE_STABLE_FRAMES_REQUIRED = 3;
+    const FACE_MIN_BOX_RATIO = 0.16;
+
+    // Utility function to wait with timeout
+    async function fetchWithTimeout(promise, timeout) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout after ' + timeout + 'ms')), timeout)
+        )
+      ]);
+    }
+
+    function isValidHexColor(value) {
+      return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value || '');
+    }
+
+    function expandHex(hex) {
+      if (!hex || hex.length !== 4) return hex;
+      return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+    }
+
+    function hexToRgb(hex) {
+      const normalized = expandHex(hex);
+      if (!isValidHexColor(normalized)) return null;
+
+      const intVal = parseInt(normalized.slice(1), 16);
+      return {
+        r: (intVal >> 16) & 255,
+        g: (intVal >> 8) & 255,
+        b: intVal & 255
+      };
+    }
+
+    function applyPhotographerTheme(photographer) {
+      const defaultColor = '#d4af55';
+      const color = isValidHexColor(photographer?.brand_color) ? photographer.brand_color : defaultColor;
+      const rgb = hexToRgb(color) || { r: 212, g: 175, b: 85 };
+
+      document.documentElement.style.setProperty('--gold', color);
+      document.documentElement.style.setProperty('--brand-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+      document.documentElement.style.setProperty('--border', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`);
+      document.documentElement.style.setProperty('--brand-gradient', `linear-gradient(90deg, ${color}, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.72))`);
+    }
+
+    function getWatermarkText() {
+      return (photographerData?.watermark || photographerData?.name || '').trim();
+    }
+
+    function createWatermarkNode(className) {
+      const watermarkText = getWatermarkText();
+      if (!watermarkText) return null;
+
+      const node = document.createElement('div');
+      node.className = className;
+      node.textContent = watermarkText;
+      return node;
+    }
+
+    async function init() {
+      console.log('[GALLERY] ========== PAGE INITIALIZATION START ==========');
+      console.log('[GALLERY] Window location:', window.location.href);
+      console.log('[GALLERY] API_BASE should be:', window.location.origin + '/api');
+      console.log('[GALLERY] Api object exists?', typeof Api !== 'undefined');
+      console.log('[GALLERY] Api.getPublicEvent exists?', typeof Api?.getPublicEvent === 'function');
+      
+      // Add Enter key listener for PIN input
+      const pinInput = document.getElementById('pin-input');
+      if (pinInput) {
+        pinInput.addEventListener('keydown', handlePinKeyPress);
+        console.log('[PIN] Event listener attached to PIN input');
+      }
+      
+      if (!slug) {
+        showError('Invalid event link - slug is empty');
+        return;
+      }
+
+      console.log('[GALLERY] Extracted slug:', slug);
+      console.log('[GALLERY] Fetching from URL:', window.location.origin + '/api/guest/event/' + slug);
+
+      try {
+        console.log('[GALLERY] Calling Api.getPublicEvent with timeout (' + REQUEST_TIMEOUT_MS + 'ms)...');
+        const promise = Api.getPublicEvent(slug);
+        const data = await fetchWithTimeout(promise, REQUEST_TIMEOUT_MS);
+        
+        console.log('[GALLERY] SUCCESS - Event data received');
+        console.log('[GALLERY] Response keys:', Object.keys(data));
+        
+        if (!data) {
+          throw new Error('API returned null response');
+        }
+        
+        if (!data.event) {
+          throw new Error('API response missing "event" key. Keys: ' + Object.keys(data).join(','));
+        }
+        
+        if (!data.photographer) {
+          throw new Error('API response missing "photographer" key. Keys: ' + Object.keys(data).join(','));
+        }
+        
+        console.log('[GALLERY] Response structure validation PASSED');
+        console.log('[GALLERY] Event title:', data.event.title);
+        console.log('[GALLERY] Photographer name:', data.photographer.name);
+        
+        loadEvent(data);
+        console.log('[GALLERY] loadEvent() completed successfully');
+        return; // Success
+      } catch (err) {
+        console.error('[GALLERY] ERROR in init (first try):', err?.message || String(err));
+        console.error('[GALLERY] Error type:', err?.constructor?.name);
+        console.error('[GALLERY] Error details:', {
+          message: err?.message,
+          status: err?.status,
+          data: err?.data,
+          stack: err?.stack?.substring(0, 500)
+        });
+        
+        if (err?.status === 403 && err?.data && err?.data.requires_pin) {
+          console.log('[GALLERY] Event requires PIN - showing PIN modal');
+          showPinModal();
+          return;
+        }
+        
+        // Try alternative slug formats (for backwards compatibility)
+        console.log('[GALLERY] Trying alternative slug formats...');
+        
+        // Extract base slug (remove UUID suffix)
+        const baseSlug = slug.replace(/-[a-f0-9]{6}$/, '');
+        console.log('[GALLERY] Base slug:', baseSlug);
+        
+        if (baseSlug !== slug) {
+          try {
+            console.log('[GALLERY] Attempting to fetch with base slug:', baseSlug);
+            const altData = await fetchWithTimeout(Api.getPublicEvent(baseSlug), REQUEST_TIMEOUT_MS);
+            if (altData && altData.event && altData.photographer) {
+              console.log('[GALLERY] SUCCESS - Got event with base slug');
+              loadEvent(altData);
+              return;
+            } else {
+              throw new Error('Invalid data structure from alternative slug');
+            }
+          } catch (altErr) {
+            console.error('[GALLERY] Base slug attempt failed:', altErr?.message);
+          }
+        }
+        
+        // If all attempts failed, show error with detailed message
+        const errorMsg = (err?.message || 'Event not found') + ' (slug: ' + slug + ')';
+        console.error('[GALLERY] All slug attempts failed. Final error:', errorMsg);
+        showError(errorMsg);
+      }
+    }
+
+    function loadEvent(data) {
+      console.log('[GALLERY] loadEvent() called');
+      console.log('[GALLERY] data structure:', {
+        hasEvent: !!data?.event,
+        hasPhotographer: !!data?.photographer,
+        eventKeys: data?.event ? Object.keys(data.event) : 'N/A',
+        photographerKeys: data?.photographer ? Object.keys(data.photographer) : 'N/A'
+      });
+      
+      // Validate input
+      if (!data || !data.event || !data.photographer) {
+        const msg = !data ? 'No data object' : !data.event ? 'No event in data' : 'No photographer in data';
+        console.error('[GALLERY] Input validation failed:', msg);
+        showError('Data validation error: ' + msg);
+        return;
+      }
+
+      try {
+        eventData = data.event;
+        const photographer = data.photographer;
+        photographerData = photographer;  // Store globally
+        applyPhotographerTheme(photographer);
+        
+        // Validate required fields
+        if (!eventData.title) {
+          throw new Error('Event title is missing');
+        }
+        if (!photographer.name) {
+          throw new Error('Photographer name is missing');
+        }
+
+        console.log('[GALLERY] Validations passed. Updating DOM...');
+
+        // Update header information
+        const title = String(eventData.title || 'Event');
+        const parts = title.split(' ');
+        
+        const eventNameEl = document.getElementById('event-name');
+        const eventNameSuffixEl = document.getElementById('event-name-suffix');
+        const photographerEl = document.getElementById('photographer');
+        const eventDateEl = document.getElementById('event-date');
+        const photoCountEl = document.getElementById('photo-count');
+        const cardsGridEl = document.getElementById('cards-grid');
+        const errorScreenEl = document.getElementById('error-screen');
+        const pinModalEl = document.getElementById('pin-modal');
+        const headerEl = document.getElementById('header');
+
+        // Check all elements exist
+        if (!eventNameEl || !eventNameSuffixEl || !photographerEl || !eventDateEl || !photoCountEl) {
+          const missingEls = [
+            {name: 'event-name', exists: !!eventNameEl},
+            {name: 'event-name-suffix', exists: !!eventNameSuffixEl},
+            {name: 'photographer', exists: !!photographerEl},
+            {name: 'event-date', exists: !!eventDateEl},
+            {name: 'photo-count', exists: !!photoCountEl}
+          ];
+          const missing = missingEls.filter(el => !el.exists).map(el => el.name).join(', ');
+          throw new Error('Missing DOM elements: ' + missing);
+        }
+
+        // Update the DOM
+        console.log('[GALLERY] Setting event name to:', parts[0]);
+        eventNameEl.textContent = parts[0] ||'Event';
+        
+        console.log('[GALLERY] Setting event name suffix to:', parts.slice(1).join(' '));
+        eventNameSuffixEl.textContent = parts.slice(1).join(' ') || 'Gallery';
+
+        const photoName = photographer.name || 'Photographer';
+        console.log('[GALLERY] Setting photographer to:', photoName);
+        photographerEl.textContent = 'Photography by ' + photoName;
+
+        // Format date
+        let dateText = '📅 Date TBD';
+        if (eventData.event_date) {
+          try {
+            const eventDate = new Date(eventData.event_date);
+            if (!isNaN(eventDate.getTime())) {
+              dateText = '📅 ' + eventDate.toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              });
+            }
+          } catch (dateErr) {
+            console.warn('[GALLERY] Error parsing date:', dateErr);
+          }
+        }
+        console.log('[GALLERY] Setting date to:', dateText);
+        eventDateEl.textContent = dateText;
+
+        const photoCountText = '🖼 ' + (eventData.photo_count || 0) + ' photos';
+        console.log('[GALLERY] Setting photo count to:', photoCountText);
+        photoCountEl.textContent = photoCountText;
+
+        // Show cards grid and hide error
+        console.log('[GALLERY] Showing cards grid...');
+        if (cardsGridEl) cardsGridEl.style.display = 'grid';
+        if (errorScreenEl) errorScreenEl.classList.remove('active');
+        if (pinModalEl) pinModalEl.classList.remove('active');
+        if (headerEl) headerEl.style.display = 'block';
+
+        console.log('[GALLERY] ========== EVENT LOADED SUCCESSFULLY ==========');
+        console.log('[GALLERY] Event display ready');
+        
+        // Update photographer button and modal with actual data
+        updatePhotographerButton();
+        
+      } catch (e) {
+        console.error('[GALLERY] EXCEPTION in loadEvent():', e.message);
+        console.error('[GALLERY] Stack trace:', e.stack?.substring(0, 1000));
+        showError('Error setting up event display: ' + e.message);
+      }
+    }
+
+    function showPinModal() {
+      document.getElementById('pin-modal').classList.add('active');
+      document.getElementById('cards-grid').style.display = 'none';
+      document.getElementById('error-screen').classList.remove('active');
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').classList.remove('active');
+      document.getElementById('pin-error').textContent = '';
+      document.getElementById('pin-input').value = '';
+    }
+
+    function handlePinKeyPress(event) {
+      console.log('[PIN] Key pressed:', event.key, 'KeyCode:', event.keyCode);
+      if (event.key === 'Enter' || event.keyCode === 13) {
+        console.log('[PIN] Enter key detected, calling submitPin()');
+        event.preventDefault();
+        event.stopPropagation();
+        submitPin();
+      }
+    }
+
+    async function submitPin() {
+      const pin = document.getElementById('pin-input').value.trim();
+      if (!pin) {
+        document.getElementById('pin-error').textContent = 'PIN is required';
+        return;
+      }
+
+      try {
+        await Api.verifyPin(slug, pin);
+        currentPin = pin;
+        const data = await Api.getPublicEvent(slug, pin);
+        loadEvent(data);
+        closePinModal();
+      } catch (err) {
+        document.getElementById('pin-error').textContent = err.message || 'Incorrect PIN';
+      }
+    }
+
+    function showError(message) {
+      console.error('[GALLERY DEBUG] showError() called with:', message);
+      try {
+        document.getElementById('error-text').textContent = message || 'Unable to load this event. Please try again or return to dashboard.';
+        document.getElementById('error-screen').classList.add('active');
+        document.getElementById('cards-grid').style.display = 'none';
+        document.getElementById('gallery-section').style.display = 'none';
+        document.getElementById('pin-modal').classList.remove('active');
+        console.log('[GALLERY DEBUG] Error screen should now be visible');
+      } catch (e) {
+        console.error('[GALLERY] Error in showError():', e);
+        alert('Error displaying error message: ' + e.message);
+      }
+    }
+
+    async function showAllPhotos() {
+      document.getElementById('gallery-section').style.display = 'block';
+      document.getElementById('cards-grid').style.display = 'none';
+      const grid = document.getElementById('photo-grid');
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color: var(--white-60); padding:2rem;">Loading photos...</div>';
+
+      try {
+        const data = await Api.getEventPhotos(slug, 1, currentPin);
+        if (!data.photos || data.photos.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color: var(--white-60); padding:2rem;">No photos available yet</div>';
+          document.getElementById('pagination-wrapper').classList.add('hidden');
+          return;
+        }
+
+        allPhotos = data.photos;
+        photosDisplayed = 0;
+        isGalleryExpanded = false;
+        grid.innerHTML = '';
+        
+        loadMorePhotos();
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color: #ff6b6b; padding:2rem;">Error loading photos: ${err.message}</div>`;
+        document.getElementById('pagination-wrapper').classList.add('hidden');
+      }
+    }
+
+    function loadMorePhotos() {
+      const grid = document.getElementById('photo-grid');
+      const startIdx = 0;
+      const endIdx = isGalleryExpanded ? allPhotos.length : Math.min(PHOTOS_PER_LOAD, allPhotos.length);
+
+      grid.innerHTML = '';
+      
+      for (let i = startIdx; i < endIdx; i++) {
+        const photo = allPhotos[i];
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        
+        const img = document.createElement('img');
+        img.src = photo.thumb_url || photo.full_url;
+        img.alt = photo.filename;
+        img.loading = 'lazy';
+        item.appendChild(img);
+
+        const watermark = createWatermarkNode('photo-watermark');
+        if (watermark) item.appendChild(watermark);
+        
+        // Add overlay with View and Download buttons
+        const overlay = document.createElement('div');
+        overlay.className = 'photo-overlay';
+        
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'photo-btn';
+        viewBtn.textContent = '👁️ View';
+        viewBtn.onclick = () => viewPhoto(photo);
+        
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'photo-btn download-btn';
+        downloadBtn.textContent = '⬇️ Download';
+        downloadBtn.onclick = () => downloadPhoto(photo);
+        
+        overlay.appendChild(viewBtn);
+        overlay.appendChild(downloadBtn);
+        item.appendChild(overlay);
+        
+        grid.appendChild(item);
+      }
+
+      photosDisplayed = endIdx;
+      updatePaginationControls();
+    }
+
+    function updatePaginationControls() {
+      const wrapper = document.getElementById('pagination-wrapper');
+      const btn = document.getElementById('btn-toggle-photos');
+      const countText = document.getElementById('photo-count-text');
+
+      if (allPhotos.length <= PHOTOS_PER_LOAD) {
+        wrapper.classList.add('hidden');
+        return;
+      }
+
+      wrapper.classList.remove('hidden');
+      
+      if (isGalleryExpanded) {
+        btn.textContent = '↑ See Less Photos';
+        countText.textContent = `Showing all ${allPhotos.length} photos`;
+      } else {
+        btn.textContent = '📸 See More Photos';
+        countText.textContent = `Showing ${PHOTOS_PER_LOAD} of ${allPhotos.length} photos`;
+      }
+    }
+
+    function toggleViewGallery() {
+      isGalleryExpanded = !isGalleryExpanded;
+      loadMorePhotos();
+    }
+
+    function loadMore() {
+      toggleViewGallery();
+      setTimeout(() => {
+        document.getElementById('pagination-wrapper').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+
+    function loadLess() {
+      toggleViewGallery();
+      document.getElementById('photo-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openFaceSearch() {
+      console.log('[GALLERY] openFaceSearch() called');
+      
+      // Check if event is indexed
+      if (!eventData?.is_indexed) {
+        const progress = eventData?.indexing_progress || 0;
+        showError(`Event is still being indexed (${progress}%). Please try again in a few moments.`);
+        return;
+      }
+      
+      // Reset face search modal
+      document.getElementById('consent-check').checked = false;
+      document.getElementById('face-error').textContent = '';
+      document.getElementById('selfie-file').value = '';
+      document.getElementById('camera-preview').classList.remove('active');
+      document.getElementById('video').srcObject = null;
+      window.capturedSelfie = null;
+      window.faceSearchPhotos = [];
+      faceAutoScanPending = false;
+      faceStableFrames = 0;
+      stopFaceAutoScan();
+      if (faceScanWarmupTimer) {
+        clearTimeout(faceScanWarmupTimer);
+        faceScanWarmupTimer = null;
+      }
+      
+      // Show face search modal
+      document.getElementById('face-search-modal').classList.add('active');
+      console.log('[GALLERY] Face search modal opened');
+    }
+
+    function closeFaceSearch() {
+      console.log('[GALLERY] closeFaceSearch() called');
+      document.getElementById('face-search-modal').classList.remove('active');
+      
+      // Stop camera if running
+      const video = document.getElementById('video');
+      if (video?.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      }
+      stopFaceAutoScan();
+      if (faceScanWarmupTimer) {
+        clearTimeout(faceScanWarmupTimer);
+        faceScanWarmupTimer = null;
+      }
+      faceAutoScanPending = false;
+      faceStableFrames = 0;
+      
+      document.getElementById('camera-preview').classList.remove('active');
+      document.getElementById('camera-btn').textContent = '📷 Use Camera';
+    }
+
+    function closeFaceSearchResults() {
+      console.log('[GALLERY] closeFaceSearchResults() called');
+      document.getElementById('face-search-results').classList.remove('active');
+    }
+
+    async function startCamera() {
+      console.log('[GALLERY] startCamera() called');
+      
+      const preview = document.getElementById('camera-preview');
+      const video = document.getElementById('video');
+      const btn = document.getElementById('camera-btn');
+      
+      try {
+        if (preview.classList.contains('active')) {
+          // Camera is active - manual capture fallback
+          captureFromCamera(true);
+          btn.textContent = '📷 Looking for Face...';
+        } else {
+          // Start camera
+          console.log('[GALLERY] Requesting camera access...');
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { 
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
+          });
+          
+          video.srcObject = stream;
+          preview.classList.add('active');
+          btn.textContent = '📷 Looking for Face...';
+          faceAutoScanPending = true;
+          faceStableFrames = 0;
+          console.log('[GALLERY] Camera started');
+
+          video.onloadedmetadata = async () => {
+            try {
+              await video.play();
+            } catch (playErr) {
+              console.warn('[GALLERY] video.play() failed:', playErr);
+            }
+
+            if (faceScanWarmupTimer) {
+              clearTimeout(faceScanWarmupTimer);
+            }
+
+            showFaceError('Camera ready. Move your face into the frame to start scanning.');
+            faceScanWarmupTimer = setTimeout(() => {
+              startFaceAutoScan();
+            }, FACE_SCAN_WARMUP_MS);
+          };
+        }
+      } catch (err) {
+        console.error('[GALLERY] Camera error:', err);
+        let errorMsg = 'Camera access denied or not available.';
+        if (err.name === 'NotAllowedError') {
+          errorMsg = 'Camera permission denied. Please allow camera access.';
+        } else if (err.name === 'NotFoundError') {
+          errorMsg = 'No camera found on this device.';
+        } else if (err.name === 'NotReadableError') {
+          errorMsg = 'Camera is already in use by another application.';
+        }
+        showFaceError(errorMsg);
+        document.getElementById('camera-btn').textContent = '📷 Camera';
+      }
+    }
+
+    function stopCameraStream() {
+      const video = document.getElementById('video');
+      if (video?.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      }
+      document.getElementById('camera-preview').classList.remove('active');
+    }
+
+    function stopFaceAutoScan() {
+      if (faceScanInterval) {
+        clearInterval(faceScanInterval);
+        faceScanInterval = null;
+      }
+      faceScanBusy = false;
+    }
+
+    function captureVideoFrameBlob() {
+      return new Promise((resolve) => {
+        const video = document.getElementById('video');
+        if (!video || !video.videoWidth || !video.videoHeight) {
+          resolve(null);
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const targetWidth = 320;
+        const scale = targetWidth / video.videoWidth;
+        canvas.width = targetWidth;
+        canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => resolve(blob || null), 'image/jpeg', 0.6);
+      });
+    }
+
+    async function startFaceAutoScan() {
+      const preview = document.getElementById('camera-preview');
+      const video = document.getElementById('video');
+
+      stopFaceAutoScan();
+      faceScanStartedAt = Date.now();
+
+      if (!document.getElementById('consent-check').checked) {
+        showFaceError('Please check consent to enable auto face scanning.');
+        document.getElementById('camera-btn').textContent = '📷 Take Photo';
+        return;
+      }
+
+      showFaceError('Look at the camera. Capturing automatically when your face is detected.');
+
+      faceScanInterval = setInterval(async () => {
+        if (faceScanBusy || !preview.classList.contains('active') || !video.srcObject || window.capturedSelfie) {
+          return;
+        }
+
+        faceScanBusy = true;
+        try {
+          if (Date.now() - faceScanStartedAt < FACE_SCAN_WARMUP_MS) {
+            showFaceError('Camera warming up. Please position your face in the frame...');
+            return;
+          }
+
+          const frameBlob = await captureVideoFrameBlob();
+          if (!frameBlob) {
+            console.warn('[GALLERY] frameBlob is null or empty');
+            showFaceError('Camera frame not ready yet. Please wait a moment.');
+            return;
+          }
+
+          console.log(`[GALLERY] Calling /api/guest/event/${slug}/detect-face with frame size:`, frameBlob.size);
+          const detection = await fetchWithTimeout(
+            Api.detectFace(slug, frameBlob, currentPin),
+            12000
+          );
+
+          console.log('[GALLERY] Detection response:', detection);
+
+          if (detection?.face_detected) {
+            faceStableFrames += 1;
+            console.log(`[GALLERY] Face detected! Stable frames: ${faceStableFrames}/${FACE_STABLE_FRAMES_REQUIRED}`);
+            showFaceError(faceStableFrames < FACE_STABLE_FRAMES_REQUIRED ? 'Face detected. Hold still...' : 'Face detected. Capturing...');
+
+            if (faceStableFrames >= FACE_STABLE_FRAMES_REQUIRED) {
+              console.log('[GALLERY] Enough stable frames detected. Triggering auto-search...');
+              stopFaceAutoScan();
+              stopCameraStream();
+              await runFaceSearch(frameBlob, { auto: true });
+            }
+          } else {
+            faceStableFrames = 0;
+            console.log('[GALLERY] No face detected in this frame');
+            showFaceError('No face detected yet. Please look directly at the camera.');
+          }
+        } catch (err) {
+          console.error('[GALLERY] Face detection tick failed:', err);
+          console.error('[GALLERY] Error details:', {
+            message: err.message,
+            status: err.status,
+            data: err.data
+          });
+          showFaceError('Waiting for a clear face in the camera...');
+        } finally {
+          faceScanBusy = false;
+        }
+      }, 1100);
+    }
+
+    function captureFromCamera(autoSubmit = false) {
+      console.log('[GALLERY] captureFromCamera() called');
+      
+      try {
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        if (canvas.width === 0 || canvas.height === 0) {
+          showFaceError('Camera is not ready yet. Please wait a moment and try again.');
+          return;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        
+        // Convert to blob
+        canvas.toBlob(blob => {
+          if (!blob) {
+            showFaceError('Failed to capture photo');
+            return;
+          }
+          console.log('[GALLERY] Captured photo:', blob.size, 'bytes');
+          window.capturedSelfie = blob;
+          showFaceError('');
+
+          stopFaceAutoScan();
+          if (faceScanWarmupTimer) {
+            clearTimeout(faceScanWarmupTimer);
+            faceScanWarmupTimer = null;
+          }
+
+          stopCameraStream();
+          
+          // Update button
+          document.getElementById('submit-btn').disabled = false;
+          document.getElementById('submit-btn').textContent = 'Find My Photos ✓';
+
+          if (autoSubmit) {
+            faceAutoScanPending = true;
+            if (document.getElementById('consent-check').checked) {
+              submitSelfie();
+            } else {
+              showFaceError('Please check consent to auto-scan your face.');
+            }
+          }
+        }, 'image/jpeg', 0.95);
+      } catch (err) {
+        console.error('[GALLERY] Capture error:', err);
+        showFaceError('Error capturing photo: ' + err.message);
+      }
+    }
+
+    function triggerFileUpload() {
+      console.log('[GALLERY] triggerFileUpload() called');
+      document.getElementById('selfie-file').click();
+    }
+
+    function handleFileSelect(event) {
+      console.log('[GALLERY] handleFileSelect() called');
+      
+      const file = event.target.files[0];
+      if (!file) {
+        console.log('[GALLERY] No file selected');
+        return;
+      }
+      
+      console.log('[GALLERY] File selected:', file.name, file.size, 'bytes');
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showFaceError('Please select an image file (JPG, PNG, etc.)');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showFaceError('File size must be less than 10MB');
+        return;
+      }
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        window.capturedSelfie = file;
+        window.selfiePreviewUrl = e.target.result;
+        
+        showFaceError('');
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('submit-btn').textContent = 'Find My Photos ✓';
+        
+        console.log('[GALLERY] File ready for upload:', file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showFaceError(message) {
+      document.getElementById('face-error').textContent = message;
+    }
+
+    const consentCheck = document.getElementById('consent-check');
+    if (consentCheck) {
+      consentCheck.addEventListener('change', () => {
+        if (consentCheck.checked && faceAutoScanPending && !window.capturedSelfie) {
+          startFaceAutoScan();
+          return;
+        }
+
+        if (consentCheck.checked && faceAutoScanPending && window.capturedSelfie) {
+          faceAutoScanPending = false;
+          submitSelfie();
+        }
+      });
+    }
+
+    async function runFaceSearch(selfieBlob, { auto = false } = {}) {
+      if (!selfieBlob) {
+        if (!auto) {
+          showFaceError('Please capture or upload a photo first');
+        }
+        return;
+      }
+
+      if (!document.getElementById('consent-check').checked) {
+        showFaceError('Please check the consent checkbox to proceed');
+        return;
+      }
+
+      try {
+        console.log('[GALLERY] Starting face search...');
+        showFaceError('');
+
+        const submitBtn = document.getElementById('submit-btn');
+        const cameraBtn = document.getElementById('camera-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        submitBtn.disabled = true;
+        cameraBtn.disabled = true;
+        uploadBtn.disabled = true;
+        submitBtn.textContent = '🔍 AI is searching...';
+
+        const response = await fetchWithTimeout(
+          Api.findMyPhotos(slug, selfieBlob, currentPin),
+          30000
+        );
+
+        submitBtn.disabled = false;
+        cameraBtn.disabled = false;
+        uploadBtn.disabled = false;
+
+        if (!response.photos || response.photos.length === 0) {
+          showFaceError('No matching photos found. This person may not appear in this event.');
+          submitBtn.textContent = 'Find My Photos ✓';
+          return;
+        }
+
+        displayFaceSearchResults(response.photos);
+      } catch (err) {
+        console.error('[GALLERY] Face search error:', err);
+
+        let errorMsg = err?.message || 'Face search failed. Please try again.';
+        if (err?.status === 503) {
+          errorMsg = 'Event is still being indexed by AI. Please try again in a few moments.';
+        } else if (err?.status === 403) {
+          errorMsg = 'Access denied to this event. Please enter the correct PIN.';
+        } else if (err?.status === 404) {
+          errorMsg = 'Event not found.';
+        } else if (err?.message?.includes('timeout')) {
+          errorMsg = 'Face recognition took too long. Please try again.';
+        } else if (err?.message?.includes('Network')) {
+          errorMsg = 'Network error. Please check your connection and try again.';
+        }
+
+        showFaceError(errorMsg);
+
+        const submitBtn = document.getElementById('submit-btn');
+        const cameraBtn = document.getElementById('camera-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        submitBtn.disabled = false;
+        cameraBtn.disabled = false;
+        uploadBtn.disabled = false;
+        submitBtn.textContent = 'Find My Photos ✓';
+      }
+    }
+
+    async function submitSelfie() {
+      console.log('[GALLERY] submitSelfie() called');
+      faceAutoScanPending = false;
+      stopFaceAutoScan();
+      if (faceScanWarmupTimer) {
+        clearTimeout(faceScanWarmupTimer);
+        faceScanWarmupTimer = null;
+      }
+      
+      // Validate consent
+      if (!document.getElementById('consent-check').checked) {
+        showFaceError('Please check the consent checkbox to proceed');
+        return;
+      }
+      
+      // Check if we have a selfie
+      if (!window.capturedSelfie) {
+        showFaceError('Please capture or upload a photo first');
+        return;
+      }
+
+      await runFaceSearch(window.capturedSelfie, { auto: false });
+    }
+
+    function displayFaceSearchResults(photos) {
+      console.log('[GALLERY] displayFaceSearchResults():', photos.length, 'photos found');
+      galleryReturnToResults = true;
+      galleryLightboxActive = false;
+      
+      const resultsGrid = document.getElementById('results-grid');
+      const resultsInfo = document.getElementById('results-info');
+      
+      // Clear previous results
+      resultsGrid.innerHTML = '';
+      
+      // Store photos for download all functionality
+      window.faceSearchPhotos = photos;
+      
+      // Update info text
+      resultsInfo.textContent = `Found ${photos.length} photo${photos.length === 1 ? '' : 's'} with you`;
+      
+      // Add photos to grid with View and Download buttons
+      photos.forEach(photo => {
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        
+        // Add image
+        const img = document.createElement('img');
+        img.src = photo.thumb_url || photo.full_url;
+        img.alt = photo.filename;
+        img.loading = 'lazy';
+        item.appendChild(img);
+
+        const watermark = createWatermarkNode('photo-watermark');
+        if (watermark) item.appendChild(watermark);
+        
+        // Add overlay with View and Download buttons
+        const overlay = document.createElement('div');
+        overlay.className = 'photo-overlay';
+        
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'photo-btn';
+        viewBtn.textContent = '👁️ View';
+        viewBtn.onclick = (e) => {
+          e.stopPropagation();
+          openPhotoLightbox(photo.full_url, photo.filename);
+        };
+        
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'photo-btn download-btn';
+        downloadBtn.textContent = '⬇️ Download';
+        downloadBtn.onclick = (e) => {
+          e.stopPropagation();
+          downloadPhoto(photo);
+        };
+        
+        overlay.appendChild(viewBtn);
+        overlay.appendChild(downloadBtn);
+        item.appendChild(overlay);
+        
+        resultsGrid.appendChild(item);
+      });
+      
+      // Show results
+      closeFaceSearch();
+      document.getElementById('face-search-results').classList.add('active');
+    }
+
+    function openPhotoLightbox(fullUrl, filename) {
+      console.log('[GALLERY] openPhotoLightbox():', filename);
+      galleryLightboxActive = true;
+      
+      // Create lightbox container
+      const lightbox = document.createElement('div');
+      lightbox.id = 'gallery-lightbox';
+      lightbox.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.95);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 2rem;
+      `;
+      
+      // Create close button
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '✕';
+      closeBtn.style.cssText = `
+        position: absolute;
+        top: 1rem;
+        right: clamp(5.8rem, 14vw, 7rem);
+        background: rgba(15, 15, 25, 0.9);
+        border: 1px solid rgba(var(--brand-rgb), 0.45);
+        color: white;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        z-index: 10005;
+      `;
+      closeBtn.onclick = () => {
+        galleryLightboxActive = false;
+        lightbox.remove();
+        if (galleryReturnToResults) {
+          const results = document.getElementById('face-search-results');
+          if (results) results.classList.add('active');
+        }
+      };
+      
+      // Create image
+      const img = document.createElement('img');
+      img.src = fullUrl;
+      img.style.cssText = `
+        max-width: 90vw;
+        max-height: 75vh;
+        border-radius: 12px;
+        border: 2px solid rgba(var(--brand-rgb), 0.3);
+        margin-bottom: 1.5rem;
+      `;
+
+      const watermark = createWatermarkNode('viewer-watermark');
+      
+      // Create download button
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '⬇️ Download Photo';
+      downloadBtn.style.cssText = `
+        padding: 0.7rem 1.4rem;
+        border-radius: 100px;
+        border: none;
+        background: var(--brand-gradient);
+        color: #1a1a2e;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+      `;
+      downloadBtn.onmouseover = () => {
+        downloadBtn.style.boxShadow = '0 8px 20px rgba(var(--brand-rgb), 0.3)';
+        downloadBtn.style.transform = 'translateY(-2px)';
+      };
+      downloadBtn.onmouseout = () => {
+        downloadBtn.style.boxShadow = 'none';
+        downloadBtn.style.transform = 'translateY(0)';
+      };
+      downloadBtn.onclick = (e) => {
+        e.stopPropagation();
+        const link = document.createElement('a');
+        link.href = fullUrl;
+        link.download = filename || 'photo.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+      
+      lightbox.appendChild(closeBtn);
+      lightbox.appendChild(img);
+      if (watermark) lightbox.appendChild(watermark);
+      lightbox.appendChild(downloadBtn);
+      lightbox.onclick = (e) => {
+        if (e.target === lightbox) {
+          galleryLightboxActive = false;
+          lightbox.remove();
+          if (galleryReturnToResults) {
+            const results = document.getElementById('face-search-results');
+            if (results) results.classList.add('active');
+          }
+        }
+      };
+      document.body.appendChild(lightbox);
+    }
+
+    function backToOptions() {
+      document.getElementById('gallery-section').style.display = 'none';
+      document.getElementById('cards-grid').style.display = 'grid';
+      allPhotos = [];
+      photosDisplayed = 0;
+    }
+
+    function handleBackNavigation() {
+      const galleryLightbox = document.getElementById('gallery-lightbox');
+      if (galleryLightbox || galleryLightboxActive) {
+        galleryLightboxActive = false;
+        if (galleryLightbox) galleryLightbox.remove();
+        if (galleryReturnToResults) {
+          const results = document.getElementById('face-search-results');
+          if (results) results.classList.add('active');
+        }
+        return;
+      }
+
+      const photographerModal = document.getElementById('photographer-modal');
+      if (photographerModal && photographerModal.classList.contains('active')) {
+        closePhotographerModal();
+        return;
+      }
+
+      const photoViewerModal = document.getElementById('photo-viewer-modal');
+      if (photoViewerModal && photoViewerModal.classList.contains('active')) {
+        closePhotoViewer();
+        return;
+      }
+
+      const faceSearchModal = document.getElementById('face-search-modal');
+      if (faceSearchModal && faceSearchModal.classList.contains('active')) {
+        closeFaceSearch();
+        return;
+      }
+
+      const faceSearchResults = document.getElementById('face-search-results');
+      if (faceSearchResults && faceSearchResults.classList.contains('active')) {
+        closeFaceSearchResults();
+        return;
+      }
+
+      const gallerySection = document.getElementById('gallery-section');
+      const cardsGrid = document.getElementById('cards-grid');
+      if (gallerySection && cardsGrid && gallerySection.style.display === 'block' && cardsGrid.style.display === 'none') {
+        backToOptions();
+        return;
+      }
+
+      // Check URL parameters
+      const params = new URLSearchParams(window.location.search);
+      const eventId = params.get('eventId');
+      const from = params.get('from');
+      const slug = params.get('slug');
+      
+      // If we have an event slug, go back to the event gallery
+      if (slug) {
+        window.location.href = `/gallery/${encodeURIComponent(slug)}`;
+        return;
+      }
+      
+      // Try browser history first
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      // If we came from dashboard with eventId, go back to dashboard
+      if (from === 'dashboard' && eventId) {
+        window.location.href = `/dashboard?view=detail&eventId=${encodeURIComponent(eventId)}`;
+        return;
+      }
+
+      // Fallback to home
+      window.location.href = '/';
+    }
+
+    // Photo Viewer Functions
+    function viewPhoto(photo) {
+      if (!photo) {
+        console.error('[VIEW] Photo object is null/undefined');
+        alert('Unable to view photo');
+        return;
+      }
+
+      currentViewerPhoto = photo;
+      const modal = document.getElementById('photo-viewer-modal');
+      const img = document.getElementById('viewer-image');
+      
+      const photoUrl = photo.full_url || photo.thumb_url;
+      if (!photoUrl) {
+        console.error('[VIEW] Photo URL is missing', photo);
+        alert('Unable to view photo - URL not available');
+        return;
+      }
+      
+      img.src = photoUrl;
+
+      const oldMark = modal.querySelector('.viewer-watermark');
+      if (oldMark) oldMark.remove();
+
+      const watermark = createWatermarkNode('viewer-watermark');
+      if (watermark) {
+        const viewerContainer = modal.querySelector('.photo-viewer-container');
+        if (viewerContainer) viewerContainer.appendChild(watermark);
+      }
+
+      modal.classList.add('active');
+      console.log('[VIEW] Photo viewer opened for:', photo.filename);
+    }
+
+    function closePhotoViewer() {
+      const modal = document.getElementById('photo-viewer-modal');
+      modal.classList.remove('active');
+      currentViewerPhoto = null;
+
+      if (galleryReturnToResults) {
+        const results = document.getElementById('face-search-results');
+        if (results) results.classList.add('active');
+      }
+    }
+
+    // Download Functions
+    function downloadPhoto(photo) {
+      if (!photo) {
+        console.error('[DOWNLOAD] Photo object is null/undefined');
+        alert('Unable to download photo');
+        return;
+      }
+
+      const photoUrl = photo.full_url || photo.thumb_url;
+      if (!photoUrl) {
+        console.error('[DOWNLOAD] Photo URL is missing', photo);
+        alert('Unable to download photo - URL not available');
+        return;
+      }
+
+      try {
+        const link = document.createElement('a');
+        link.href = photoUrl;
+        link.download = photo.filename || 'photo.jpg';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log('[DOWNLOAD] Photo download initiated:', photo.filename);
+      } catch (err) {
+        console.error('[DOWNLOAD] Error:', err);
+        alert('Download failed: ' + err.message);
+      }
+    }
+
+    function downloadCurrentPhoto() {
+      if (currentViewerPhoto) {
+        downloadPhoto(currentViewerPhoto);
+      }
+    }
+
+    function downloadAllPhotos() {
+      // Determine which photos to download
+      let photosToDownload = allPhotos;
+      
+      // If face search results are visible, download those instead
+      const faceSearchResults = document.getElementById('face-search-results');
+      if (faceSearchResults && faceSearchResults.classList.contains('active')) {
+        photosToDownload = window.faceSearchPhotos || [];
+      }
+      
+      if (!photosToDownload || photosToDownload.length === 0) {
+        alert('No photos to download');
+        return;
+      }
+
+      // Show downloading message
+      const btn = event.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⬇️ Downloading...';
+      btn.disabled = true;
+
+      // Download files individually
+      downloadIndividually(photosToDownload, originalText, btn);
+    }
+
+    function downloadIndividually(photosToDownload, originalText, btn) {
+      // Download each photo with a small delay to avoid browser blocking
+      photosToDownload.forEach((photo, index) => {
+        setTimeout(() => {
+          downloadPhoto(photo);
+        }, index * 500); // 500ms delay between downloads
+      });
+
+      // Reset button
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }, photosToDownload.length * 500 + 1000);
+    }
+
+    // Close photo viewer when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('photo-viewer-modal');
+      if (event.target === modal) {
+        closePhotoViewer();
+      }
+    });
+
+    // Close photo viewer with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const modal = document.getElementById('photo-viewer-modal');
+        if (modal.classList.contains('active')) {
+          closePhotoViewer();
+        }
+      }
+    });
+
+    // ── PHOTOGRAPHER MODAL FUNCTIONS ──────────────────────────────────────
+    function openPhotographerModal() {
+      loadPhotographerProfileData();
+      document.getElementById('photographer-modal').classList.add('active');
+      const button = document.getElementById('photographer-btn');
+      if (button) button.style.display = 'none';
+    }
+
+    function closePhotographerModal() {
+      document.getElementById('photographer-modal').classList.remove('active');
+      const button = document.getElementById('photographer-btn');
+      if (button) button.style.display = 'flex';
+    }
+
+    function switchPhotographerTab(tab) {
+      // Remove active class from all tabs and contents
+      document.querySelectorAll('.photographer-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.photographer-modal-content').forEach(c => c.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding content
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    // Fetch and load photographer profile data from API
+    async function loadPhotographerProfileData() {
+      try {
+        // Always use eventData.photographer_id as it's the most reliable
+        const photographerId = eventData?.photographer_id;
+        if (!photographerId) {
+          console.error('[PHOTOGRAPHER] No photographer ID in eventData:', eventData);
+          return;
+        }
+        
+        console.log('[PHOTOGRAPHER] Loading profile for ID:', photographerId);
+        
+        // Fetch photographer public profile
+        const response = await fetch(`/api/profile/${photographerId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const profile = await response.json();
+        console.log('[PHOTOGRAPHER] Profile loaded:', profile);
+        console.log('[PHOTOGRAPHER] Special photos details:', profile.special_photos_details);
+        console.log('[PHOTOGRAPHER] Special photos array length:', profile.special_photos_details?.length || 0);
+        
+        // Build initials for avatar
+        const pName = profile.name || 'Photographer';
+        const pParts = pName.trim().split(/\s+/).filter(Boolean);
+        const pInitials = pParts.length > 1
+          ? (pParts[0][0] + pParts[pParts.length-1][0]).toUpperCase()
+          : pName.slice(0,2).toUpperCase();
+
+        // Update About Photographer Tab
+        const contactInfo = `
+          <div class="photographer-info-card" id="photographer-info" style="position:relative;">
+            <button class="photographer-modal-close" onclick="closePhotographerModal()">✕</button>
+            <!-- Avatar -->
+            <div class="photographer-avatar">${pInitials}</div>
+            <!-- Name & badge -->
+            <h2>${pName}</h2>
+            <p>${profile.bio || 'Professional photographer specializing in capturing your special moments.'}</p>
+            <div class="photographer-verified-badge">✦ Professional Photographer</div>
+            <!-- Contact rows -->
+            <div style="text-align:left;">
+              <div class="contact-row">
+                <div class="contact-icon">👤</div>
+                <div><div class="contact-label">Full Name</div><div class="contact-value">${profile.name || 'N/A'}</div></div>
+              </div>
+              ${profile.email ? `<div class="contact-row">
+                <div class="contact-icon">📧</div>
+                <div><div class="contact-label">Email</div><div class="contact-value">${profile.email}</div></div>
+              </div>` : ''}
+              ${profile.mobile_number ? `<div class="contact-row">
+                <div class="contact-icon">📱</div>
+                <div><div class="contact-label">Mobile</div><div class="contact-value">${profile.mobile_number}</div></div>
+              </div>` : ''}
+            </div>
+          </div>
+        `;
+        document.getElementById('tab-about').innerHTML = contactInfo;
+        
+        // Update Photography Tab
+        const specializations = profile.specializations?.length
+          ? profile.specializations.join(' • ')
+          : 'Wedding • Birthday • Party • Corporate • Events';
+        
+        const specChips = specializations.split(' • ').map(s => `<span style="display:inline-block;padding:0.3rem 0.85rem;background:rgba(var(--brand-rgb),0.12);border:1px solid rgba(var(--brand-rgb),0.28);border-radius:100px;font-size:0.8rem;font-weight:600;color:var(--gold);margin:0.25rem;">${s.trim()}</span>`).join('');
+
+        let photographyContent = `
+          <div style="max-width: 700px; margin: 0 auto; position:relative;">
+            <button class="photographer-modal-close" onclick="closePhotographerModal()">✕</button>
+            <h2 style="text-align: center; margin-bottom: 0.5rem; font-family: 'Playfair Display', serif; color: var(--white);">Photography Portfolio</h2>
+            <p style="text-align:center;color:var(--white-60);font-size:0.88rem;margin-bottom:1.5rem;">Styles &amp; specializations</p>
+            <div class="photographer-info-section">
+              <h3>Specializations</h3>
+              <div style="margin-top:0.5rem;">${specChips}</div>
+            </div>
+        `;
+        
+        // Featured photos: prefer selected portfolio photos, fallback to current event photos
+        const featuredPhotos = (profile.special_photos_details && profile.special_photos_details.length > 0)
+          ? profile.special_photos_details.map(photo => {
+              const filename = photo.filename || 'portfolio.jpg';
+              const eventId = photo.event_id;
+
+              return {
+                filename,
+                alt: filename || 'Portfolio',
+                thumb_url: `/api/photos/thumbnail/${eventId}/${filename}`,
+                full_url: `/api/photos/serve/${eventId}/${filename}`
+              };
+            })
+          : (allPhotos || []).slice(0, 8).map(photo => ({
+              filename: photo.filename,
+              alt: photo.filename || 'Featured',
+              thumb_url: photo.thumb_url || photo.full_url,
+              full_url: photo.full_url || photo.thumb_url
+            }));
+
+        console.log('[PHOTOGRAPHER] Featured photos count:', featuredPhotos.length);
+
+        if (featuredPhotos.length > 0) {
+          photographyContent += `
+            <div class="photographer-info-section" style="margin-top: 2rem;">
+              <h3>Featured Photos</h3>
+              <div id="featured-photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;margin-top:1rem;">
+          `;
+          
+          photographyContent += `
+              </div>
+            </div>
+          `;
+        } else {
+          photographyContent += `
+            <div class="photographer-info-section" style="margin-top: 2rem;">
+              <h3>Featured Photos</h3>
+              <p style="margin: 0; color: var(--white-60);">No featured photos yet.</p>
+            </div>
+          `;
+        }
+        
+        photographyContent += `</div>`;
+        document.getElementById('tab-photography').innerHTML = photographyContent;
+
+        const featuredGrid = document.getElementById('featured-photo-grid');
+        if (featuredGrid && featuredPhotos && featuredPhotos.length > 0) {
+          console.log('[FEATURED-PHOTOS] Rendering', featuredPhotos.length, 'photos');
+          
+          featuredPhotos.forEach((photo, index) => {
+            if (!photo || !photo.thumb_url && !photo.full_url) {
+              console.warn('[FEATURED-PHOTOS] Skipping invalid photo at index', index, photo);
+              return;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'photo-item';
+            card.style.minHeight = '140px';
+
+            const img = document.createElement('img');
+            img.src = photo.thumb_url || photo.full_url;
+            img.alt = photo.alt || photo.filename || 'Featured photo';
+            img.loading = 'lazy';
+            img.onerror = () => {
+              console.warn('[FEATURED-PHOTOS] Image failed to load:', img.src);
+            };
+            card.appendChild(img);
+
+            const overlay = document.createElement('div');
+            overlay.className = 'photo-overlay';
+
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'photo-btn';
+            viewBtn.textContent = '👁️ View';
+            viewBtn.type = 'button';
+            viewBtn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[FEATURED-PHOTOS] View clicked for:', photo.filename);
+              viewPhoto(photo);
+            };
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'photo-btn download-btn';
+            downloadBtn.textContent = '⬇️ Download';
+            downloadBtn.type = 'button';
+            downloadBtn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[FEATURED-PHOTOS] Download clicked for:', photo.filename);
+              downloadPhoto(photo);
+            };
+
+            overlay.appendChild(viewBtn);
+            overlay.appendChild(downloadBtn);
+            card.appendChild(overlay);
+
+            featuredGrid.appendChild(card);
+          });
+          
+          console.log('[FEATURED-PHOTOS] Rendering complete');
+        } else {
+          console.warn('[FEATURED-PHOTOS] Featured grid not found or no photos to render');
+        }
+        
+      } catch (err) {
+        console.error('[PHOTOGRAPHER] Error loading profile:', err);
+        document.getElementById('tab-about').innerHTML = '<p style="color:var(--white-60);text-align:center;">Unable to load photographer profile</p>';
+      }
+    }
+
+    // Update photographer button with initials when page loads
+    function updatePhotographerButton() {
+      if (!photographerData) {
+        console.log('[PHOTOGRAPHER] No photographer data available yet');
+        return;
+      }
+
+      const button = document.getElementById('photographer-btn');
+      if (!button) return;
+
+      const name = (photographerData.name || 'Photographer').trim();
+      const parts = name.split(/\s+/).filter(Boolean);
+      const initials = parts.length > 1
+        ? `${parts[0][0]}${parts[parts.length - 1][0]}`
+        : name.slice(0, 2);
+
+      button.textContent = initials.toUpperCase();
+      button.setAttribute('aria-label', `Open photographer information for ${name}`);
+      button.title = name;
+    }
+
+    // Initialize app
+    async function initApp() {
+      await init();
+      setTimeout(updatePhotographerButton, 100);
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapAI — Login</title>
+  <script>
+    (function() {
+      try {
+        const theme = localStorage.getItem('snapai_theme');
+        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      } catch (err) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/css/main.css" />
+  <style>
+    body {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 70% 50% at 10% 20%, rgba(212,175,85,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 80%, rgba(139,92,246,0.06) 0%, transparent 50%),
+        var(--black);
+    }
+
+    .auth-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .auth-left {
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 4rem;
+      background: var(--dark-mid);
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-left::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 30% 50%, rgba(212,175,85,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .auth-left-content {
+      max-width: 400px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-logo {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 3rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+
+    .auth-logo .icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--gold), var(--accent));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .auth-tagline { font-size: 0.85rem; color: var(--white-30); margin-bottom: 3rem; }
+
+    .testimonial {
+      background: var(--surface);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+    }
+
+    .testimonial p {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--white-60);
+      margin-bottom: 1rem;
+    }
+
+    .testimonial .author {
+      font-size: 0.82rem;
+      color: var(--gold);
+      font-weight: 600;
+      font-style: normal;
+      font-family: var(--font-body);
+    }
+
+    .feature-bullets {
+      list-style: none;
+      margin: 2rem 0;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    .feature-bullets li {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.9rem; color: var(--white-60);
+    }
+
+    .feature-bullets li .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+
+    /* ── Right Side (Forms) ── */
+    .auth-right {
+      display: flex; align-items: center; justify-content: center;
+      padding: 4rem 3rem;
+    }
+
+    .auth-form-container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* ── Tabs ── */
+    .auth-tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 2rem;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 0.65rem;
+      background: none;
+      border: none;
+      color: var(--white-30);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: calc(var(--radius) - 4px);
+      transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid var(--border-gold);
+    }
+
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+
+    /* ── Password Toggle ── */
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrapper input {
+      width: 100%;
+      padding-right: 2.8rem;
+    }
+
+    .toggle-eye {
+      position: absolute;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--white-30);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+
+    .toggle-eye:hover {
+      color: var(--gold);
+    }
+
+    .toggle-eye svg {
+      display: block;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--white-30);
+    }
+
+    @media (max-width: 900px) {
+      .auth-layout { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
+      .auth-right { padding: 2rem 1.5rem; }
+    }
+
+    @media (max-width: 768px) {
+      body { min-height: auto; }
+      .auth-right { padding: 1.5rem 1rem; min-height: 100vh; }
+      
+      .auth-form-container { max-width: 100%; }
+      
+      .auth-tabs {
+        margin-bottom: 1.5rem;
+        border-radius: var(--radius-sm);
+      }
+      
+      .auth-tab {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+      }
+      
+      .form-row { grid-template-columns: 1fr; }
+      
+      .btn-gold, .btn-primary { min-height: 44px; }
+    }
+
+    @media (max-width: 480px) {
+      .auth-layout { min-height: auto; }
+      .auth-right { padding: 1rem 0.75rem; }
+      
+      .auth-form-container h2 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+      .auth-form-container p { font-size: 0.85rem; margin-bottom: 1.5rem; }
+      
+      .form-group { margin-bottom: 0.5rem; }
+      
+      label { font-size: 0.7rem; }
+      
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="color"] {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.6rem;
+        min-height: 44px;
+      }
+      
+      .auth-footer { font-size: 0.8rem; margin-top: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-layout">
+  <!-- Left Branding Panel -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-logo">
+        <div class="icon">📸</div>
+        Snap<span style="color:var(--gold)">AI</span>
+      </div>
+      <p class="auth-tagline">The professional photo delivery platform for event photographers.</p>
+
+      <ul class="feature-bullets">
+        <li><div class="dot"></div> AI face recognition — guests find photos instantly</li>
+        <li><div class="dot"></div> Bulk upload thousands of photos in one go</li>
+        <li><div class="dot"></div> Custom branding & watermarking</li>
+        <li><div class="dot"></div> PIN-protected private galleries</li>
+        <li><div class="dot"></div> One-click download & share</li>
+      </ul>
+
+      <div class="testimonial">
+        <p>"SnapAI changed how I deliver wedding photos. My clients are always amazed."</p>
+        <span class="author">— Riya Sharma, Wedding Photographer, Mumbai</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Form Panel -->
+  <div class="auth-right">
+    <div class="auth-form-container fade-up">
+      <h2 style="margin-bottom:0.4rem;">Welcome back</h2>
+      <p style="margin-bottom:2rem;">Sign in to your photographer dashboard</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form active" id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="login-password" placeholder="Your password" required />
+            <button type="button" class="toggle-eye" onclick="togglePassword('login-password', this)" aria-label="Show password">
+              <svg id="eye-icon-login" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gold btn-full btn-lg" id="login-btn">
+          Sign In to Dashboard
+        </button>
+        <p class="auth-footer">Don't have an account? <a href="#" onclick="switchTab('register');return false;">Create one free</a></p>
+      </form>
+
+      <!-- Register Form -->
+      <form class="auth-form" id="register-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="reg-name" placeholder="Arjun Mehta Photography" required />
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="reg-password" placeholder="Min 8 characters" required minlength="8" />
+            <button type="button" class="toggle-eye" onclick="togglePassword('reg-password', this)" aria-label="Show password">
+              <svg id="eye-icon-reg" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Brand Color</label>
+            <input type="color" id="reg-color" value="#d4af55" style="height:42px;padding:4px;" />
+          </div>
+          <div class="form-group">
+            <label>Watermark Text</label>
+            <input type="text" id="reg-watermark" placeholder="© Your Studio" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gold btn-full btn-lg" id="register-btn">
+          Create Free Account
+        </button>
+        <p class="auth-footer">Already have an account? <a href="#" onclick="switchTab('login');return false;">Sign in</a></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/js/api.js"></script>
+<script>
+  // Redirect if already logged in to dashboard
+  console.log('[DEBUG] Login page loaded');
+  
+  try {
+    const token = Api.getToken();
+    console.log('[DEBUG] Token check:', token ? 'Found' : 'Not found');
+    
+    if (token) {
+      console.log('[DEBUG] User already logged in, redirecting to dashboard');
+      window.location.href = '/dashboard';
+    } else {
+      console.log('[DEBUG] New user on login page');
+    }
+  } catch (err) {
+    console.error('[ERROR] Auth check failed:', err);
+  }
+
+  // Auto-switch to register if hash says so
+  if (window.location.hash === '#register') switchTab('register');
+
+  // ── Password Toggle ──────────────────────────────────────────────
+  function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    // Swap eye icon
+    btn.querySelector('svg').innerHTML = isHidden
+      ? /* eye-off */
+        `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+         <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+         <line x1="1" y1="1" x2="23" y2="23"/>`
+      : /* eye */
+        `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+         <circle cx="12" cy="12" r="3"/>`;
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+    document.getElementById('login-form').classList.toggle('active', tab === 'login');
+    document.getElementById('register-form').classList.toggle('active', tab === 'register');
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.textContent = 'Signing in…'; btn.disabled = true;
+    try {
+      await Api.login(
+        document.getElementById('login-email').value,
+        document.getElementById('login-password').value
+      );
+      window.location.href = '/dashboard';
+    } catch (err) {
+      toast(err.message || 'Login failed', 'error');
+      btn.textContent = 'Sign In to Dashboard'; btn.disabled = false;
+    }
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('register-btn');
+    btn.textContent = 'Creating account…'; btn.disabled = true;
+    try {
+      await Api.register({
+        name:        document.getElementById('reg-name').value,
+        email:       document.getElementById('reg-email').value,
+        password:    document.getElementById('reg-password').value,
+        brand_color: document.getElementById('reg-color').value,
+        watermark:   document.getElementById('reg-watermark').value || document.getElementById('reg-name').value
+      });
+      window.location.href = '/dashboard';
+    } catch (err) {
+      toast(err.message || 'Registration failed', 'error');
+      btn.textContent = 'Create Free Account'; btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

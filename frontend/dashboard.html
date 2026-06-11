@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapAI — Dashboard</title>
+  <script>
+    (function() {
+      try {
+        const theme = localStorage.getItem('snapai_theme');
+        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      } catch (err) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+</head>
+<body>
+
+<div class="dash-layout">
+
+  <!-- ── Sidebar Toggle ── -->
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">📸</div>
+      Snap<span style="color:var(--gold)">AI</span>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="#" class="active" data-tab="overview" onclick="switchSection('overview',this)">
+        <span class="icon">📊</span> Overview
+      </a></li>
+      <li><a href="#" data-tab="events" onclick="switchSection('events',this)">
+        <span class="icon">📁</span> My Events
+      </a></li>
+      <li><a href="#" data-tab="upload" onclick="switchSection('upload',this)">
+        <span class="icon">⬆</span> Upload Photos
+      </a></li>
+      <li><a href="#" data-tab="profile" onclick="switchSection('profile',this)">
+        <span class="icon">👤</span> My Profile
+      </a></li>
+      <li><a href="#" data-tab="settings" onclick="switchSection('settings',this)">
+        <span class="icon">⚙</span> Settings
+      </a></li>
+      <li style="margin-top:auto;padding-top:2rem;">
+        <a href="/" onclick="">
+          <span class="icon">🏠</span> View Site
+        </a>
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="photographer-badge" id="sidebar-photographer-badge" onclick="openProfileChatFromLN()" title="Open LN profile chat">
+        <div class="avatar" id="sidebar-avatar">—</div>
+        <div class="info">
+          <div class="name" id="sidebar-name">Loading…</div>
+          <div class="role">Photographer</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:0.75rem;" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="dash-main">
+
+    <!-- ── OVERVIEW ── -->
+    <section id="section-overview" class="dash-section">
+      <div class="dash-header">
+        <div>
+          <h1>Good morning 👋</h1>
+          <div class="dash-title-sub" id="overview-sub">Your photography business at a glance</div>
+        </div>
+        <button class="btn btn-gold" onclick="openCreateEvent()">+ New Event</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card fade-up">
+          <div class="stat-label">Total Events</div>
+          <div class="stat-value" id="stat-events">—</div>
+          <div class="stat-desc">Active galleries</div>
+          <span class="stat-icon">📁</span>
+        </div>
+        <div class="stat-card fade-up delay-1">
+          <div class="stat-label">Total Photos</div>
+          <div class="stat-value" id="stat-photos">—</div>
+          <div class="stat-desc">Across all events</div>
+          <span class="stat-icon">🖼</span>
+        </div>
+        <div class="stat-card fade-up delay-2">
+          <div class="stat-label">Indexed</div>
+          <div class="stat-value" id="stat-indexed">—</div>
+          <div class="stat-desc">AI-ready galleries</div>
+          <span class="stat-icon">🤖</span>
+        </div>
+        <div class="stat-card fade-up delay-3">
+          <div class="stat-label">Storage</div>
+          <div class="stat-value" id="stat-storage">—</div>
+          <div class="stat-desc">Photos uploaded</div>
+          <span class="stat-icon">💾</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+        <h3>Recent Events</h3>
+        <button class="btn btn-ghost btn-sm" onclick="switchSection('events')">View All →</button>
+      </div>
+      <div class="events-grid" id="recent-events-grid">
+        <div class="empty-state" id="overview-empty" style="display:none;grid-column:1/-1;">
+          <div class="icon">📷</div>
+          <h3>No events yet</h3>
+          <p>Create your first event to get started</p>
+          <button class="btn btn-gold" style="margin-top:1.5rem;" onclick="openCreateEvent()">Create Event</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EVENTS ── -->
+    <section id="section-events" class="dash-section" style="display:none;">
+      <div class="dash-header">
+        <div>
+          <h1>My Events</h1>
+          <div class="dash-title-sub">Manage all your event galleries</div>
+        </div>
+        <button class="btn btn-gold" onclick="openCreateEvent()">+ New Event</button>
+      </div>
+
+      <!-- ── Search Events ── -->
+      <div style="margin-bottom:1.5rem;">
+        <input 
+          type="text" 
+          id="event-search-input" 
+          placeholder="🔍 Search events by name..." 
+          class="event-search-input"
+          onkeyup="filterEvents()"
+        />
+      </div>
+
+      <div class="events-grid" id="all-events-grid">
+        <div class="empty-state" id="events-empty" style="display:none;grid-column:1/-1;">
+          <div class="icon">📁</div>
+          <h3>No events yet</h3>
+          <p>Create your first event gallery</p>
+          <button class="btn btn-gold" style="margin-top:1.5rem;" onclick="openCreateEvent()">Create Event</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── UPLOAD ── -->
+    <section id="section-upload" class="dash-section" style="display:none;">
+      <div class="dash-header">
+        <div>
+          <h1>Upload Photos</h1>
+          <div class="dash-title-sub">Add photos to an event gallery</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:2rem;">
+        <div class="form-group">
+          <label>Select Event</label>
+          <select id="upload-event-select" onchange="onEventSelect()">
+            <option value="">— Choose an event —</option>
+          </select>
+        </div>
+
+        <div id="upload-zone-wrapper" style="display:none;">
+          <!-- Indexing status -->
+          <div class="indexing-status" id="indexing-status" style="display:none;">
+            <div class="indexing-dot" id="indexing-dot"></div>
+            <div style="flex:1;">
+              <div style="font-size:0.9rem;font-weight:600;" id="indexing-label">Not indexed</div>
+              <div class="progress-bar" style="margin-top:0.5rem;" id="indexing-bar-wrap" style="display:none;">
+                <div class="progress-fill" id="indexing-fill" style="width:0%;"></div>
+              </div>
+            </div>
+            <button class="btn btn-gold btn-sm" id="btn-start-index" onclick="startIndexing()">
+              🤖 Start AI Indexing
+            </button>
+          </div>
+
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" multiple accept="image/*" id="file-input" onchange="handleFiles(this.files)" />
+            <div class="upload-icon">📁</div>
+            <p><strong>Drag & drop photos here</strong></p>
+            <p>or click to browse files</p>
+            <p class="upload-hint">JPG, PNG, WEBP · Up to 500 MB total · Unlimited files</p>
+          </div>
+
+          <!-- Upload queue -->
+          <div id="upload-queue" style="display:none;margin-top:1.5rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+              <h3 id="queue-heading">0 files selected</h3>
+              <div style="display:flex;gap:0.75rem;">
+                <button class="btn btn-ghost btn-sm" onclick="clearQueue()">Clear</button>
+                <button class="btn btn-gold" id="btn-upload" onclick="uploadFiles()">⬆ Upload All</button>
+              </div>
+            </div>
+            <div class="progress-bar" style="margin-bottom:1rem;" id="upload-progress-wrap" style="display:none;">
+              <div class="progress-fill" id="upload-fill" style="width:0%;"></div>
+            </div>
+            <div id="queue-list" style="display:flex;flex-direction:column;gap:0.5rem;max-height:250px;overflow-y:auto;"></div>
+          </div>
+
+          <!-- Photo grid -->
+          <div id="event-photos-section" style="margin-top:2rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+              <h3>Gallery Photos <span id="event-photo-count" style="color:var(--white-30);font-size:1rem;"></span></h3>
+              <button class="btn btn-ghost btn-sm" onclick="refreshPhotos()">↻ Refresh</button>
+            </div>
+            <div class="photo-grid" id="photo-grid"></div>
+            <!-- Pagination Controls -->
+            <div id="photos-pagination" style="display:none;margin-top:2rem;padding:1.5rem;background:rgba(212,175,85,0.08);border:1px solid rgba(212,175,85,0.2);border-radius:12px;text-align:center;">
+              <button class="btn btn-gold" id="btn-photos-toggle" onclick="togglePhotosView()">📸 See More Photos</button>
+              <div id="photos-count-info" style="color:var(--gold);font-size:0.9rem;font-weight:600;margin-top:1rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PROFILE ── -->
+    <section id="section-profile" class="dash-section" style="display:none;">
+      <div class="dash-header">
+        <div>
+          <h1>My Profile</h1>
+          <div class="dash-title-sub">Manage your photographer information</div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="profile-top-tabs" style="display:flex;gap:2rem;border-bottom:1px solid var(--border);margin-bottom:2rem;">
+        <button class="profile-tab-btn active" id="profile-tab-btn-about" onclick="switchProfileTab('about')" style="background:transparent;border:0;border-bottom:3px solid var(--gold);color:var(--gold);">
+          <span style="font-weight:600;color:var(--gold);">About Photographer</span>
+        </button>
+        <button class="profile-tab-btn" id="profile-tab-btn-photography" onclick="switchProfileTab('photography')" style="background:transparent;border:0;border-bottom:3px solid transparent;color:var(--gold);">
+          <span style="font-weight:600;color:var(--gold);">Photography</span>
+        </button>
+        <button class="profile-tab-btn" id="profile-tab-btn-chats" onclick="switchProfileTab('chats')" style="background:transparent;border:0;border-bottom:3px solid transparent;color:var(--gold);">
+          <span style="font-weight:600;color:var(--gold);">Chats</span>
+        </button>
+      </div>
+
+      <!-- ABOUT PHOTOGRAPHER TAB -->
+      <div id="profile-tab-about" class="profile-tab-content">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <h3 style="margin:0;color:var(--gold);">Contact Information</h3>
+        </div>
+        <div class="card" style="max-width:600px;">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="profile-name" placeholder="Your name" />
+          </div>
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" id="profile-email" placeholder="your@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="tel" id="profile-mobile" placeholder="+91-XXXXXXXXXX" />
+          </div>
+          <button class="btn btn-gold" onclick="saveContactInfo()">💾 Save Contact Info</button>
+        </div>
+      </div>
+
+      <!-- PHOTOGRAPHY TAB -->
+      <div id="profile-tab-photography" class="profile-tab-content" style="display:none;">
+        <div class="profile-photography-head" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <h3 style="margin:0;color:var(--gold);">Photography Details</h3>
+        </div>
+        
+        <!-- Specializations -->
+        <div class="card profile-specializations-card" style="margin-bottom:1.4rem;padding:1.05rem 1.2rem;">
+          <div class="profile-specializations-head" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+            <h4 style="margin:0;">Specializations</h4>
+            <div class="profile-specializations-actions" style="display:flex;gap:0.55rem;flex-wrap:wrap;">
+              <button type="button" onclick="openAddSpecializationModal()" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.32rem 0.65rem;border:1px solid rgba(212,175,85,0.35);border-radius:999px;background:rgba(212,175,85,0.08);color:var(--gold);font-size:0.78rem;font-weight:700;letter-spacing:0.04em;cursor:pointer;">➕ Add Event</button>
+              <button type="button" onclick="removeSpecializationEvent()" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.32rem 0.65rem;border:1px solid rgba(255,120,120,0.42);border-radius:999px;background:rgba(255,120,120,0.08);color:#ffb2b2;font-size:0.78rem;font-weight:700;letter-spacing:0.04em;cursor:pointer;">➖ Remove Event</button>
+            </div>
+          </div>
+          <p style="color:var(--white-60);font-size:0.88rem;margin-bottom:0.7rem;">Select your photography specializations</p>
+          <div id="specialization-options" style="display:flex;flex-wrap:wrap;gap:0.55rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="checkbox" class="spec-checkbox" value="Wedding" /> Wedding
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="checkbox" class="spec-checkbox" value="Birthday" /> Birthday
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="checkbox" class="spec-checkbox" value="Party" /> Party
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="checkbox" class="spec-checkbox" value="Corporate" /> Corporate
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;">
+              <input type="checkbox" class="spec-checkbox" value="Events" /> Events
+            </label>
+          </div>
+        </div>
+
+        <div class="card profile-portfolio-card" style="padding:1.1rem 1.2rem;">
+          <h4 style="margin-bottom:0.75rem;">Special Portfolio Photos</h4>
+          <p style="color:var(--white-60);font-size:0.88rem;margin-bottom:1rem;">Upload the photos you want to use in your portfolio. Each photo will show the photographer name.</p>
+          
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <button class="btn btn-primary btn-sm" onclick="triggerPortfolioPhotoUpload()">Upload Photos</button>
+            <input type="file" id="portfolio-photo-input" accept="image/*" multiple style="display:none;" onchange="uploadPortfolioPhotos(event)" />
+          </div>
+
+          <div id="portfolio-photos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:0.8rem;margin-bottom:1.1rem;"></div>
+        </div>
+
+        <button class="btn btn-gold" style="margin-top:1.1rem;" onclick="savePhotographyInfo()">💾 Save Photography Info</button>
+      </div>
+
+      <!-- CHATS TAB -->
+      <div id="profile-tab-chats" class="profile-tab-content" style="display:none;">
+        <div class="card profile-chat-card" id="profile-chat-card" style="padding:1.1rem 1.2rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.75rem;">
+            <h3 style="margin:0;color:var(--gold);">Photographer Client Chats</h3>
+            <span class="profile-chat-status">Live</span>
+          </div>
+          <p style="color:var(--white-60);font-size:0.88rem;margin-bottom:0.7rem;">Conversation between photographer and client.</p>
+
+          <div id="profile-chat-messages" class="profile-chat-messages profile-chat-messages-lg"></div>
+
+          <div class="profile-chat-input-row" style="margin-top:0.75rem;">
+            <select id="profile-chat-sender" aria-label="Chat sender">
+              <option value="photographer">Photographer</option>
+              <option value="client">Client</option>
+            </select>
+            <input type="text" id="profile-chat-input" placeholder="Type a message..." maxlength="400" />
+            <button type="button" class="btn btn-primary btn-sm" onclick="sendProfileChatMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EVENT DETAIL PAGE ── -->
+    <section id="section-event-detail" class="dash-section" style="display:none;">
+      <div id="event-detail-content"></div>
+    </section>
+
+    <section id="section-share" class="dash-section" style="display:none;">
+      <div class="card share-page-card">
+        <div id="share-page-content"></div>
+      </div>
+    </section>
+
+    <section id="section-settings" class="dash-section" style="display:none;">
+      <div class="dash-header">
+        <div>
+          <h1>Settings</h1>
+          <div class="dash-title-sub">Manage your photographer profile</div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:600px;">
+        <h3 style="margin-bottom:1.5rem;">Profile</h3>
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="set-name" placeholder="Your name or studio" />
+        </div>
+        <div class="form-group">
+          <label>Brand Color</label>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <input type="color" id="set-color" style="width:60px;height:42px;padding:4px;" />
+            <span style="font-size:0.85rem;color:var(--white-30);">Used for gallery branding</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Watermark Text</label>
+          <input type="text" id="set-watermark" placeholder="© Your Studio Name" />
+        </div>
+        <div class="form-group">
+          <label>Theme</label>
+          <select id="set-theme">
+            <option value="dark">Dark Theme</option>
+            <option value="light">Light Theme</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" onclick="saveSettings()">Save Changes</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Create Event Modal ── -->
+<div class="modal-overlay" id="create-event-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCreateEvent()">✕</button>
+    <h3 style="margin-bottom:0.2rem;font-size:1.3rem;font-weight:700;">Create New Event</h3>
+    <p style="margin-bottom:0.8rem;font-size:0.80rem;color:var(--white-30);">Set up a new gallery for your event.</p>
+
+    <form onsubmit="handleCreateEvent(event)">
+      <div class="form-group">
+        <label>Event Title *</label>
+        <input type="text" id="ev-title" placeholder="Rahul & Priya's Wedding" required />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="ev-desc" placeholder="Brief description…" rows="1" style="min-height:45px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Event Date</label>
+        <input type="date" id="ev-date" />
+      </div>
+      <div class="form-group">
+        <label>Event Type</label>
+        <select id="ev-type">
+          <option value="general">General</option>
+          <option value="wedding">Wedding</option>
+          <option value="birthday">Birthday</option>
+          <option value="party">Party</option>
+          <option value="engagement">Engagement</option>
+          <option value="farewell">Farewell</option>
+          <option value="fresher">Fresher</option>
+          <option value="diwali">Diwali</option>
+          <option value="holi">Holi</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Access</label>
+        <select id="ev-public">
+          <option value="true">Public — Anyone with the link can view</option>
+          <option value="false">Private — Protected with PIN</option>
+        </select>
+      </div>
+      <div class="form-group" id="pin-group" style="display:none;">
+        <label>4-Digit PIN</label>
+        <input type="text" id="ev-pin" placeholder="e.g. 2024" maxlength="4" pattern="[0-9]{4}" />
+      </div>
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.8rem;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeCreateEvent()">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" id="btn-create-event">Create Event</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Select Event Cover Photo Modal ── -->
+<div class="modal-overlay" id="select-cover-modal">
+  <div class="modal" style="max-width:800px;">
+    <button class="modal-close" onclick="closeSelectCoverModal()">✕</button>
+    <div id="select-cover-content"></div>
+  </div>
+</div>
+
+<!-- ── Edit Event Modal ── -->
+<div class="modal-overlay" id="edit-event-modal">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeEditEventModal()">✕</button>
+    <h2 style="margin-bottom:1.5rem;">Edit Event</h2>
+    
+    <form id="edit-event-form" style="display:flex; flex-direction:column; gap:1rem;">
+      <div>
+        <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; color:var(--white-60);">Event Title</label>
+        <input type="text" id="edit-event-title" placeholder="Event title" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:var(--white); font-size:1rem;" required>
+      </div>
+      
+      <div>
+        <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; color:var(--white-60);">Event Type</label>
+        <select id="edit-event-type" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:var(--white); font-size:1rem;">
+          <option value="general">General</option>
+          <option value="wedding">Wedding</option>
+          <option value="birthday">Birthday</option>
+          <option value="party">Party</option>
+          <option value="engagement">Engagement</option>
+          <option value="farewell">Farewell</option>
+          <option value="fresher">Fresher</option>
+          <option value="diwali">Diwali</option>
+          <option value="holi">Holi</option>
+        </select>
+      </div>
+      
+      <div>
+        <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; color:var(--white-60);">Event Date</label>
+        <input type="date" id="edit-event-date" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:var(--white); font-size:1rem;">
+      </div>
+      
+      <div>
+        <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; color:var(--white-60);">Description</label>
+        <textarea id="edit-event-description" placeholder="Event description" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:var(--white); font-size:1rem; min-height:100px; resize:vertical;"></textarea>
+      </div>
+      
+      <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+        <button type="button" class="btn btn-ghost" onclick="closeEditEventModal()">Cancel</button>
+        <button type="submit" class="btn btn-gold">💾 Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Delete Event Confirmation Modal ── -->
+<div class="modal-overlay" id="delete-event-modal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeDeleteEventModal()">✕</button>
+    <h3 style="margin-bottom:0.8rem;font-size:1.35rem;font-weight:700;">Delete Event</h3>
+    <p style="margin-bottom:1.2rem;color:var(--white-60);">Are you sure you want to delete event?</p>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeDeleteEventModal()">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="btn-confirm-delete-event" onclick="confirmDeleteEvent()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Photo Confirmation Modal ── -->
+<div class="modal-overlay" id="delete-photo-modal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeDeletePhotoModal()">✕</button>
+    <h3 style="margin-bottom:0.8rem;font-size:1.35rem;font-weight:700;">Delete Photo</h3>
+    <p style="margin-bottom:1.2rem;color:var(--white-60);">Delete this photo?</p>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeDeletePhotoModal()">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" id="btn-confirm-delete-photo" onclick="confirmDeletePhoto()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add Specialization Modal ── -->
+<div class="modal-overlay" id="specialization-modal">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeAddSpecializationModal()">✕</button>
+    <h3 style="margin-bottom:0.25rem;font-size:1.35rem;font-weight:700;">Add Event</h3>
+    <p style="margin-bottom:1rem;color:var(--white-60);">Enter event name to add.</p>
+
+    <form onsubmit="confirmAddSpecialization(event)">
+      <div class="form-group">
+        <label>Event Name</label>
+        <input type="text" id="specialization-name" placeholder="e.g. Engagement" required />
+      </div>
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.8rem;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeAddSpecializationModal()">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Add Event</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Remove Specialization Modal ── -->
+<div class="modal-overlay" id="specialization-remove-modal">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeRemoveSpecializationModal()">✕</button>
+    <h3 style="margin-bottom:0.25rem;font-size:1.35rem;font-weight:700;">Remove Event</h3>
+    <p id="specialization-remove-message" style="margin-bottom:1rem;color:var(--white-60);">Remove event?</p>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.8rem;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeRemoveSpecializationModal()">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemoveSpecialization()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Remove Portfolio Photo Modal ── -->
+<div class="modal-overlay" id="portfolio-photo-remove-modal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closePortfolioPhotoRemoveModal()">✕</button>
+    <h3 style="margin-bottom:0.25rem;font-size:1.35rem;font-weight:700;">Remove Portfolio Photo</h3>
+    <p id="portfolio-photo-remove-message" style="margin-bottom:1rem;color:var(--white-60);">Are you sure you want to remove this photo from portfolio?</p>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.8rem;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closePortfolioPhotoRemoveModal()">Cancel</button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemovePortfolioPhoto()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .share-input-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+  }
+
+  .share-input-group input {
+    flex: 1 !important;
+    background: var(--black) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    padding: 0.75rem !important;
+    color: var(--gold) !important;
+    font-family: monospace !important;
+    font-size: 0.85rem !important;
+  }
+
+  .share-social-buttons {
+    display: flex !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .share-social-buttons a {
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    cursor: pointer !important;
+  }
+
+  .share-social-buttons a:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  }
+
+  .share-page-card {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  #section-share h2 {
+    font-size: 1.8rem;
+    font-family: var(--font-display);
+  }
+
+  /* ── PHOTO ADJUSTMENT MODAL STYLES ── */
+  #photo-adjustment-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 9995;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  #photo-adjustment-modal.active {
+    display: flex;
+  }
+
+  .photo-adjustment-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .photo-adjustment-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .photo-adjustment-header h2 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+  }
+
+  .photo-adjustment-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .photo-adjustment-canvas-wrapper {
+    width: 100%;
+    max-width: 600px;
+    max-height: 400px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.3);
+  }
+
+  .photo-adjustment-canvas-wrapper img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .photo-adjustment-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(212,175,85,0.08);
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  .adjustment-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .adjustment-control-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--white-60);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .adjustment-control-group input[type="range"] {
+    width: 150px;
+    cursor: pointer;
+  }
+
+  .adjustment-control-group .aspect-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    background: rgba(212,175,85,0.1);
+    border: 1px solid rgba(212,175,85,0.3);
+    border-radius: 6px;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .adjustment-control-group .aspect-btn:hover,
+  .adjustment-control-group .aspect-btn.active {
+    background: rgba(212,175,85,0.3);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .photo-adjustment-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  .crop-aspect-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+</style>
+
+<!-- ── Photo Adjustment Modal ── -->
+<div id="photo-adjustment-modal">
+  <div class="photo-adjustment-container">
+    <div class="photo-adjustment-header">
+      <h2>Adjust Event Cover Photo</h2>
+      <button class="modal-close" onclick="closePhotoAdjustmentModal()">✕</button>
+    </div>
+    
+    <div class="photo-adjustment-content">
+      <div class="photo-adjustment-canvas-wrapper">
+        <img id="adjustment-image" style="max-width:100%;max-height:100%;" />
+      </div>
+
+      <div class="photo-adjustment-controls">
+        <div class="adjustment-control-group">
+          <label>Zoom</label>
+          <input type="range" id="crop-zoom" min="0.1" max="3" step="0.1" value="1" style="width:150px;" onchange="updateCropZoom()">
+          <span style="font-size:0.75rem;color:var(--white-30);" id="zoom-value">100%</span>
+        </div>
+
+        <div class="adjustment-control-group">
+          <label>Aspect Ratio</label>
+          <div class="crop-aspect-buttons">
+            <button class="aspect-btn active" data-ratio="0" onclick="setCropAspect(this, 0)">Free</button>
+            <button class="aspect-btn" data-ratio="1" onclick="setCropAspect(this, 1)">1:1 (Square)</button>
+            <button class="aspect-btn" data-ratio="16/9" onclick="setCropAspect(this, '16/9')">16:9</button>
+            <button class="aspect-btn" data-ratio="4/3" onclick="setCropAspect(this, '4/3')">4:3</button>
+          </div>
+        </div>
+
+        <div class="adjustment-control-group">
+          <label>Rotation</label>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-ghost btn-sm" onclick="rotateImageLeft()">⟲ Left</button>
+            <button class="btn btn-ghost btn-sm" onclick="rotateImageRight()">Right ⟳</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="photo-adjustment-footer">
+      <button class="btn btn-ghost" onclick="closePhotoAdjustmentModal()">Cancel</button>
+      <button class="btn btn-gold" id="btn-apply-crop" onclick="applyCropAndSetCover()">✓ Apply & Set Cover</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

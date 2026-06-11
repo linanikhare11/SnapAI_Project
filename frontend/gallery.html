@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapAI — Your Event Photos</title>
+  <script>
+    (function() {
+      try {
+        const theme = localStorage.getItem('snapai_theme');
+        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      } catch (err) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      --bg-dark: #050508;
+      --bg-mid: #0a0a12;
+      --gold: #d4af55;
+      --white: #f5f5f8;
+      --white-60: rgba(245, 245, 248, 0.6);
+      --card-bg: rgba(20, 20, 35, 0.75);
+      --border: rgba(212, 175, 85, 0.25);
+      --radius: 20px;
+    }
+
+    html[data-theme='light'] {
+      --bg-dark: #f4f7ff;
+      --bg-mid: #ffffff;
+      --gold: #6f63ff;
+      --white: #1f2a44;
+      --white-60: rgba(31, 42, 68, 0.72);
+      --card-bg: rgba(248, 251, 255, 0.95);
+      --border: rgba(70, 83, 120, 0.16);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #050508 0%, #0a0a12 40%, #050508 100%);
+      color: var(--white);
+      font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    html[data-theme='light'],
+    html[data-theme='light'] body {
+      background:
+        radial-gradient(ellipse 75% 45% at 50% -10%, rgba(111, 99, 255, 0.15) 0%, transparent 58%),
+        linear-gradient(135deg, #f4f7ff 0%, #eef3ff 52%, #f8faff 100%);
+      color: var(--white);
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 1.2rem;
+      left: 1.2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 15, 25, 0.8);
+      color: var(--white);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .back-btn:hover {
+      background: rgba(15, 15, 25, 0.95);
+      box-shadow: 0 6px 16px rgba(212, 175, 85, 0.2);
+      transform: translateY(-1px);
+    }
+
+    html[data-theme='light'] .back-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(70, 83, 120, 0.16);
+      box-shadow: 0 8px 20px rgba(111, 99, 255, 0.14);
+      color: var(--white);
+    }
+
+    #content {
+      width: 100%;
+      height: 100%;
+      max-width: 1400px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 2rem 1.5rem 1rem;
+      background: linear-gradient(180deg, rgba(8,10,22,0.5) 0%, rgba(4,5,14,0.7) 100%);
+    }
+
+    html[data-theme='light'] #content {
+      background: linear-gradient(180deg, rgba(237, 242, 255, 0.78) 0%, rgba(248, 251, 255, 0.96) 100%);
+    }
+
+    #content::-webkit-scrollbar { width: 6px; }
+    #content::-webkit-scrollbar-track { background: transparent; }
+    #content::-webkit-scrollbar-thumb { background: rgba(212, 175, 85, 0.3); border-radius: 10px; }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(212, 175, 85, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--gold);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 0 20px rgba(212, 175, 85, 0.2);
+    }
+
+    html[data-theme='light'] .badge {
+      background: rgba(111, 99, 255, 0.12);
+      border-color: rgba(111, 99, 255, 0.3);
+      color: var(--gold);
+      box-shadow: 0 0 20px rgba(111, 99, 255, 0.18);
+    }
+
+    .photographer {
+      color: var(--white-60);
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+      font-weight: 500;
+    }
+
+    .main-title {
+      font-size: clamp(2.2rem, 8vw, 5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.02em;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .main-title span {
+      background: linear-gradient(90deg, #fff 0%, #d4af55 50%, #f0df5f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .event-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      color: var(--white-60);
+      font-size: 0.95rem;
+      margin-top: 0.8rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 2rem auto 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(212, 175, 85, 0.3);
+      border-radius: var(--radius);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: var(--gold);
+      background: rgba(25, 25, 45, 0.9);
+      box-shadow: 0 20px 40px rgba(212, 175, 85, 0.15);
+    }
+
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .card-desc {
+      color: var(--white-60);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1.2rem;
+    }
+
+    .card-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 100px;
+      border: 1px solid rgba(212, 175, 85, 0.4);
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: auto;
+      transition: all 0.3s ease;
+    }
+
+    .card-btn:hover {
+      box-shadow: 0 8px 20px rgba(212, 175, 85, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .card.gallery-card .card-btn {
+      background: linear-gradient(90deg, #7c5cff, #6a54db);
+      color: #fff;
+      border-color: rgba(122, 92, 255, 0.4);
+    }
+
+    .card.gallery-card .card-btn:hover {
+      box-shadow: 0 8px 20px rgba(122, 92, 255, 0.3);
+    }
+
+    #gallery-section {
+      display: none;
+      margin-top: 2rem;
+    }
+
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .gallery-header h2 {
+      font-size: 1.4rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .back-link {
+      background: rgba(212, 175, 85, 0.1);
+      border: 1px solid var(--border);
+      color: var(--gold);
+      padding: 0.5rem 1rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+
+    .back-link:hover {
+      background: rgba(212, 175, 85, 0.2);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .photo-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(212, 175, 85, 0.15);
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .photo-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 12px;
+    }
+
+    .photo-item:hover .photo-overlay {
+      opacity: 1;
+    }
+
+    .photo-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1rem;
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .photo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(212, 175, 85, 0.4);
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      backdrop-filter: blur(4px);
+      padding: 1rem;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lightbox-image {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .lightbox-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .lightbox-btn {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .lightbox-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(212, 175, 85, 0.4);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -2.5rem;
+      right: 0;
+      background: none;
+      border: none;
+      color: var(--gold);
+      font-size: 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .lightbox-close:hover {
+      transform: scale(1.1);
+    }
+
+    .download-all-btn {
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      border: none;
+      color: #1a1a2e;
+      padding: 0.5rem 1rem;
+      border-radius: 100px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .download-all-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(212, 175, 85, 0.4);
+    }
+
+    .pin-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(4px);
+    }
+
+    .pin-modal.active {
+      display: flex;
+    }
+
+    .pin-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .pin-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .pin-card p {
+      color: var(--white-60);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(10, 10, 20, 0.8);
+      color: var(--white);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      font-family: monospace;
+    }
+
+    .pin-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(212, 175, 85, 0.3);
+    }
+
+    .pin-btn {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 100px;
+      border: none;
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pin-btn:hover {
+      box-shadow: 0 8px 20px rgba(212, 175, 85, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .pin-error {
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      margin-top: 0.8rem;
+      min-height: 1rem;
+    }
+
+    /* ── Photographer Info Modal ── */
+    .photographer-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+      backdrop-filter: blur(8px);
+      padding: 4rem 1.5rem 1.5rem;
+    }
+
+    .photographer-modal.active {
+      display: flex;
+    }
+
+    .photographer-card {
+      background: linear-gradient(135deg, rgba(15, 15, 30, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%);
+      border: 1px solid rgba(212, 175, 85, 0.3);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(212, 175, 85, 0.15);
+    }
+
+    .photographer-header {
+      padding: 2rem;
+      border-bottom: 1px solid rgba(212, 175, 85, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .photographer-title {
+      font-size: 1.4rem;
+      font-family: 'Playfair Display', serif;
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .photographer-close {
+      background: none;
+      border: none;
+      color: var(--gold);
+      font-size: 1.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .photographer-close:hover {
+      background: rgba(212, 175, 85, 0.1);
+      transform: rotate(90deg);
+    }
+
+    .photographer-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(212, 175, 85, 0.2);
+      background: rgba(10, 10, 20, 0.3);
+      overflow-x: auto;
+      margin-top: 0.45rem;
+      padding-left: 62px;
+      padding-top: 0;
+      position: static;
+      top: 0;
+    }
+
+    .photographer-tab {
+      flex: 1;
+      min-width: 150px;
+      padding: 0.95rem 1.25rem;
+      border: none;
+      background: none;
+      color: var(--white-60);
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.35;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .photographer-tab:hover {
+      color: var(--white);
+    }
+
+    .photographer-tab.active {
+      color: var(--gold);
+    }
+
+    .photographer-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .photographer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    .photographer-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .photographer-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .photographer-content::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 85, 0.3);
+      border-radius: 3px;
+    }
+
+    .photographer-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold), #f0e5c8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    .photographer-tagline {
+      text-align: center;
+      color: var(--white-60);
+      font-size: 1.05rem;
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+      font-style: italic;
+      letter-spacing: 0.3px;
+    }
+
+    .photographer-contact {
+      background: linear-gradient(135deg, rgba(212, 175, 85, 0.1) 0%, rgba(212, 175, 85, 0.05) 100%);
+      border: 1px solid rgba(212, 175, 85, 0.25);
+      border-radius: 20px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px rgba(212, 175, 85, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .contact-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      color: var(--white);
+      font-size: 0.96rem;
+      border-bottom: 1px solid rgba(212, 175, 85, 0.08);
+    }
+
+    .contact-item:last-child {
+      border-bottom: none;
+    }
+
+    .contact-item strong {
+      color: var(--gold);
+      font-weight: 600;
+      min-width: 75px;
+    }
+
+    .portfolio-section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .portfolio-section-desc {
+      color: var(--white-60);
+      font-size: 0.95rem;
+      margin-bottom: 1.75rem;
+      line-height: 1.6;
+    }
+
+    .portfolio-specializations {
+      background: linear-gradient(135deg, rgba(212, 175, 85, 0.08) 0%, rgba(212, 175, 85, 0.04) 100%);
+      border: 1px solid rgba(212, 175, 85, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 4px 12px rgba(212, 175, 85, 0.06);
+    }
+
+    .portfolio-specializations-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .portfolio-specializations-text {
+      color: var(--white);
+      font-size: 1rem;
+      line-height: 1.7;
+      letter-spacing: 0.3px;
+    }
+
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .portfolio-item {
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, rgba(212, 175, 85, 0.1) 0%, rgba(212, 175, 85, 0.05) 100%);
+      border: 1.5px solid rgba(212, 175, 85, 0.2);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .portfolio-item:hover {
+      border-color: var(--gold);
+      box-shadow: 0 12px 32px rgba(212, 175, 85, 0.25), 0 0 20px rgba(212, 175, 85, 0.15);
+      transform: translateY(-6px) scale(1.02);
+    }
+
+    .portfolio-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .portfolio-item:hover img {
+      transform: scale(1.1);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .photographer-card {
+        max-height: 90vh;
+        max-width: 95vw;
+        border-radius: 16px;
+      }
+
+      .photographer-header {
+        padding: 1.5rem;
+        gap: 1rem;
+      }
+
+      .photographer-title {
+        font-size: 1.1rem;
+      }
+
+      .photographer-close {
+        font-size: 1.5rem;
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      .photographer-tabs {
+        padding: 0;
+        margin-top: 1.7rem;
+        padding-left: 56px;
+        padding-top: 0;
+        top: 0;
+      }
+
+      .portfolio-section-title {
+        font-size: 1.15rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .portfolio-specializations {
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+      }
+
+      .photographer-tab {
+        padding: 0.85rem 0.8rem;
+        font-size: 0.84rem;
+        min-width: auto;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .photographer-content {
+        padding: 1.5rem;
+      }
+
+      .photographer-name {
+        font-size: 1.6rem;
+      }
+
+      .photographer-tagline {
+        font-size: 0.92rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .photographer-contact {
+        padding: 1.25rem;
+      }
+
+      .contact-item {
+        font-size: 0.88rem;
+        padding: 0.65rem 0;
+      }
+
+      .contact-item strong {
+        min-width: 75px;
+      }
+
+      .portfolio-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 0.9rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .photographer-modal {
+        padding: 3.5rem 0 0;
+        align-items: flex-start;
+      }
+
+      .photographer-card {
+        margin-top: 0.75rem;
+      }
+
+      .photographer-card {
+        max-height: 100vh;
+        max-width: 100vw;
+        border-radius: 0;
+      }
+
+      .photographer-header {
+        padding: 1.25rem;
+        gap: 0.75rem;
+      }
+
+      .photographer-title {
+        font-size: 1rem;
+      }
+
+      .photographer-close {
+        font-size: 1.3rem;
+        min-width: 32px;
+        min-height: 32px;
+      }
+
+      .photographer-tabs {
+        padding: 0;
+        overflow-x: visible;
+        margin-top: 0.35rem;
+        padding-left: 50px;
+        padding-top: 0;
+        top: 0;
+      }
+
+      .portfolio-section-title {
+        font-size: 1.1rem;
+      }
+
+      .portfolio-specializations {
+        padding: 1.2rem;
+        margin-bottom: 1.75rem;
+      }
+
+      .portfolio-specializations-text {
+        font-size: 0.95rem;
+      }
+
+      .photographer-tab {
+        padding: 0.72rem 0.55rem;
+        font-size: 0.74rem;
+        min-width: 0;
+        flex: 1;
+        white-space: normal;
+        line-height: 1.25;
+      }
+
+      .photographer-tab::-webkit-scrollbar {
+        height: 3px;
+      }
+
+      .photographer-content {
+        padding: 1.25rem;
+        max-height: calc(100vh - 150px);
+      }
+
+      .photographer-name {
+        font-size: 1.4rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .photographer-tagline {
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.5;
+      }
+
+      .photographer-contact {
+        padding: 1rem;
+        border-radius: 12px;
+      }
+
+      .contact-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .contact-item {
+        font-size: 0.8rem;
+        padding: 0.5rem 0;
+        gap: 0.5rem;
+        align-items: flex-start;
+      }
+
+      .contact-item strong {
+        min-width: 60px;
+        font-size: 0.75rem;
+      }
+
+      .portfolio-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
+      }
+
+      .portfolio-section-title {
+        font-size: 1rem;
+      }
+
+      .portfolio-section-desc {
+        font-size: 0.82rem;
+        margin-bottom: 1.1rem;
+      }
+
+      .portfolio-specializations {
+        padding: 0.95rem;
+        margin-bottom: 1.2rem;
+      }
+
+      .portfolio-specializations-text {
+        font-size: 0.86rem;
+        line-height: 1.5;
+      }
+
+      .photographer-tab.active::after {
+        height: 2px;
+      }
+    }
+
+    .error-screen {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      position: fixed;
+      inset: 0;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .error-screen.active {
+      display: flex;
+    }
+
+    .error-screen h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .error-screen p {
+      color: var(--white-60);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    .error-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 100px;
+      border: none;
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      color: #1a1a2e;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .cards-grid { grid-template-columns: 1fr; }
+      .main-title { font-size: clamp(1.8rem, 6vw, 2.8rem); }
+      .event-info { gap: 1rem; font-size: 0.85rem; }
+      #content { padding: 1rem 1rem 1rem; }
+      .photo-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    }
+
+    /* Face Search Modal */
+    .face-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      backdrop-filter: blur(6px);
+    }
+
+    .face-modal.active {
+      display: flex;
+    }
+
+    .face-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .face-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .face-title {
+      font-size: 1.2rem;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .face-desc {
+      color: var(--white-60);
+      font-size: 0.8rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .camera-box {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+      flex-shrink: 0;
+    }
+
+    .camera-box video,
+    .camera-box canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .camera-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--white-60);
+      gap: 0.75rem;
+    }
+
+    .camera-placeholder-icon {
+      font-size: 2.5rem;
+    }
+
+    .selfie-preview {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .selfie-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .camera-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .face-guide {
+      width: 160px;
+      height: 200px;
+      border: 3px solid var(--gold);
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .consent-box {
+      background: rgba(212, 175, 85, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      font-size: 0.75rem;
+      line-height: 1.3;
+    }
+
+    .consent-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+
+    .consent-check input {
+      margin-top: 0.2rem;
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .face-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 0.6rem 0.9rem;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: rgba(212, 175, 85, 0.1);
+      color: var(--white);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+
+    .face-btn:hover {
+      background: rgba(212, 175, 85, 0.2);
+      border-color: var(--gold);
+    }
+
+    .face-btn.primary {
+      background: linear-gradient(90deg, #d4af55, #f0df5f);
+      color: #1a1a2e;
+      border-color: transparent;
+    }
+
+    .face-btn.primary:hover {
+      box-shadow: 0 8px 20px rgba(212, 175, 85, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .face-error {
+      color: #ff6b6b;
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+      text-align: center;
+      min-height: 1rem;
+    }
+
+    .scan-progress {
+      display: none;
+      text-align: center;
+      padding: 1.5rem 1rem;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(212, 175, 85, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="goBack()">←</button>
+
+  <div id="content">
+    <div class="header" id="header">
+      <div class="badge">📸 POWERED BY AI FACE RECOGNITION</div>
+      <div class="photographer" id="photographer" onclick="openPhotographerModal()" style="cursor:pointer;transition:color 0.3s ease;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--white-60)'">Photography by Lina Nikhare</div>
+      <h1 class="main-title"><span id="event-name">Lina's</span> <span id="event-name-suffix">Birthday</span></h1>
+      <div class="event-info">
+        <span id="event-date">📅 8 November 2003</span>
+        <span id="photo-count">🖼 15 photos</span>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cards-grid">
+      <div class="card" onclick="openFaceSearch()">
+        <div class="card-icon">🤳</div>
+        <h2 class="card-title">Find My Photos</h2>
+        <p class="card-desc">AI instantly finds every photo you appear in</p>
+        <button class="card-btn">AI Powered</button>
+      </div>
+
+      <div class="card gallery-card" onclick="showAllPhotos()">
+        <div class="card-icon">🖼️</div>
+        <h2 class="card-title">View All Photos</h2>
+        <p class="card-desc">Browse the complete event gallery</p>
+        <button class="card-btn">Full Collection</button>
+      </div>
+    </div>
+
+    <section id="gallery-section">
+      <div class="gallery-header">
+        <h2>Event Gallery</h2>
+        <div style="display: flex; gap: 1rem;">
+          <button class="download-all-btn" onclick="downloadAllPhotos()">⬇ Download All</button>
+          <button class="back-link" onclick="backToOptions()">← Back</button>
+        </div>
+      </div>
+      <div class="photo-grid" id="photo-grid"></div>
+    </section>
+
+    <div class="lightbox" id="lightbox">
+      <div class="lightbox-content">
+        <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+        <img id="lightbox-image" class="lightbox-image" src="" alt="" />
+        <div class="lightbox-controls">
+          <button class="lightbox-btn" onclick="downloadLightboxImage()">⬇ Download</button>
+          <button class="lightbox-btn" onclick="closeLightbox()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-screen" id="error-screen">
+    <h2>Event Unavailable</h2>
+    <p id="error-text">Unable to load this event. Please try again or return to dashboard.</p>
+    <button class="error-btn" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+  </div>
+
+  <div class="pin-modal" id="pin-modal">
+    <div class="pin-card">
+      <h3>Private Event</h3>
+      <p>Enter the access PIN to continue</p>
+      <input type="password" class="pin-input" id="pin-input" maxlength="6" placeholder="Enter PIN" />
+      <button class="pin-btn" onclick="submitPin()">Unlock</button>
+      <div class="pin-error" id="pin-error"></div>
+    </div>
+  </div>
+
+  <!-- Photographer Info Modal -->
+  <div class="photographer-modal" id="photographer-modal">
+    <div class="photographer-card">
+      <div class="photographer-header">
+        <h2 class="photographer-title">Photographer Info</h2>
+        <button class="photographer-close" onclick="closePhotographerModal()">✕</button>
+      </div>
+
+      <div class="photographer-tabs">
+        <button class="photographer-tab active" onclick="switchPhotographerTab('about')">About the Photographer</button>
+        <button class="photographer-tab" onclick="switchPhotographerTab('portfolio')">Photography Portfolio</button>
+      </div>
+
+      <div class="photographer-content">
+        <!-- About Tab -->
+        <div id="photographer-about-tab" style="display: block;">
+          <div class="photographer-name" id="modal-photographer-name">Photographer Name</div>
+          <div class="photographer-tagline" id="modal-photographer-tagline">Professional photographer specializing in capturing your special moments.</div>
+
+          <div class="photographer-contact">
+            <div class="contact-label">Contact</div>
+            <div class="contact-item">
+              <strong>Name:</strong>
+              <span id="modal-contact-name">—</span>
+            </div>
+            <div class="contact-item">
+              <strong>Email:</strong>
+              <span id="modal-contact-email">—</span>
+            </div>
+            <div class="contact-item">
+              <strong>Mobile:</strong>
+              <span id="modal-contact-mobile">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Portfolio Tab -->
+        <div id="photographer-portfolio-tab" style="display: none;">
+          <h2 class="portfolio-section-title">Photography Portfolio</h2>
+          
+          <div class="portfolio-specializations">
+            <span class="portfolio-specializations-label">Specializations</span>
+            <div class="portfolio-specializations-text" id="portfolio-specializations">
+              Wedding • Birthday • Party • Corporate • Events
+            </div>
+          </div>
+
+          <div style="margin-bottom: 1.75rem;">
+            <h3 class="portfolio-section-title">Featured Photos</h3>
+            <p class="portfolio-section-desc">Browse selected photography portfolio</p>
+          </div>
+          <div class="portfolio-grid" id="portfolio-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Face Search Modal -->
+  <div class="face-modal" id="face-modal">
+    <div class="face-card">
+      <button class="face-close" onclick="closeFaceSearch()">✕</button>
+      
+      <div id="face-step-1">
+        <h3 class="face-title">Find My Photos</h3>
+        <p class="face-desc">Upload a selfie and AI will find every photo with you in it</p>
+        
+        <div class="camera-box" id="camera-box">
+          <div class="camera-placeholder" id="camera-placeholder">
+            <div class="camera-placeholder-icon">📷</div>
+            <div>Camera ready</div>
+          </div>
+          <video id="camera-video" style="display:none;" autoplay playsinline></video>
+          <canvas id="camera-canvas" style="display:none;"></canvas>
+          <div class="camera-overlay" id="camera-overlay" style="display:none;">
+            <div class="face-guide"></div>
+          </div>
+          <div class="selfie-preview" id="selfie-preview">
+            <img id="selfie-img" src="" alt="Your selfie" />
+          </div>
+        </div>
+
+        <div class="consent-box">
+          <div class="consent-check">
+            <input type="checkbox" id="consent-check" />
+            <label for="consent-check" style="cursor: pointer;">
+              I consent to my photo being analyzed using AI facial recognition. My selfie will not be stored permanently.
+            </label>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="face-btn" onclick="startCamera()" id="btn-camera">📷 Camera</button>
+          <label class="face-btn" style="cursor: pointer; margin: 0;">
+            📁 Upload
+            <input type="file" accept="image/*" style="display:none;" onchange="handleSelfieUpload(event)" />
+          </label>
+          <button class="face-btn" id="btn-capture" onclick="captureSelfie()" style="display:none;">🎯 Capture</button>
+        </div>
+
+        <button class="face-btn primary" id="btn-search" onclick="searchFace()" style="display:none; width: 100%;">🔍 Find My Photos</button>
+        <div class="face-error" id="face-error"></div>
+      </div>
+
+      <div id="face-step-2" class="scan-progress">
+        <div class="spinner"></div>
+        <h3>Scanning gallery…</h3>
+        <p id="scan-text" style="color: var(--white-60); font-size: 0.9rem;">Searching through photos for your face</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const slug = window.location.pathname.split('/gallery/')[1];
+    let eventData = null;
+    let currentPin = '';
+
+    function goBack() {
+      // Check if gallery section is open
+      if (document.getElementById('gallery-section').style.display === 'block') {
+        backToOptions();
+      }
+      // Check if face modal is open
+      else if (document.getElementById('face-modal').classList.contains('active')) {
+        closeFaceSearch();
+      }
+      // Otherwise check where we came from
+      else {
+        const params = new URLSearchParams(window.location.search);
+        const from = params.get('from');
+        const eventId = params.get('eventId');
+        
+        // If coming from event detail page, go back to dashboard with eventId
+        if (from === 'event-detail' && eventId) {
+          window.location.href = `/dashboard?view=detail&eventId=${eventId}`;
+        } else {
+          window.location.href = '/dashboard';
+        }
+      }
+    }
+
+    // ── Photographer Modal Functions ──
+    function openPhotographerModal() {
+      const modal = document.getElementById('photographer-modal');
+      if (eventData && eventData.photographer) {
+        const p = eventData.photographer;
+        document.getElementById('modal-photographer-name').textContent = p.name || 'Photographer';
+        document.getElementById('modal-photographer-tagline').textContent = p.tagline || 'Professional photographer specializing in capturing your special moments.';
+        document.getElementById('modal-contact-name').textContent = p.name || '—';
+        document.getElementById('modal-contact-email').textContent = p.email || '—';
+        document.getElementById('modal-contact-mobile').textContent = p.mobile || '—';
+      }
+      modal.classList.add('active');
+    }
+
+    function closePhotographerModal() {
+      document.getElementById('photographer-modal').classList.remove('active');
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('photographer-modal');
+      if (event.target === modal) {
+        closePhotographerModal();
+      }
+    });
+
+    function switchPhotographerTab(tab) {
+      // Hide all tabs
+      document.getElementById('photographer-about-tab').style.display = 'none';
+      document.getElementById('photographer-portfolio-tab').style.display = 'none';
+
+      // Remove active class from all tabs
+      document.querySelectorAll('.photographer-tab').forEach(t => t.classList.remove('active'));
+
+      // Show selected tab
+      document.getElementById(`photographer-${tab}-tab`).style.display = 'block';
+      event.target.classList.add('active');
+    }
+
+    async function init() {
+      if (!slug) {
+        showError('Invalid event link');
+        return;
+      }
+
+      try {
+        const data = await Api.getPublicEvent(slug);
+        loadEvent(data);
+      } catch (err) {
+        if (err.status === 403 && err.data && err.data.requires_pin) {
+          showPinModal();
+          return;
+        }
+        showError(err.message || 'Event not found');
+      }
+    }
+
+    function loadEvent(data) {
+      eventData = data.event;
+      eventData.photographer = data.photographer;  // Store photographer data in eventData
+      const photographer = data.photographer;
+
+      const title = eventData.title;
+      const parts = title.split(' ');
+      document.getElementById('event-name').textContent = parts[0];
+      document.getElementById('event-name-suffix').textContent = parts.slice(1).join(' ');
+
+      document.getElementById('photographer').textContent = `Photography by ${photographer.name || 'Photographer'}`;
+      document.getElementById('event-date').textContent = eventData.event_date 
+        ? `📅 ${new Date(eventData.event_date).toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'})}`
+        : '📅 Date TBD';
+      document.getElementById('photo-count').textContent = `🖼 ${eventData.photo_count} photos`;
+
+      document.getElementById('cards-grid').style.display = 'grid';
+      document.getElementById('error-screen').classList.remove('active');
+      document.getElementById('pin-modal').classList.remove('active');
+    }
+
+    function showPinModal() {
+      document.getElementById('pin-modal').classList.add('active');
+      document.getElementById('cards-grid').style.display = 'none';
+      document.getElementById('error-screen').classList.remove('active');
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').classList.remove('active');
+      document.getElementById('pin-error').textContent = '';
+      document.getElementById('pin-input').value = '';
+    }
+
+    async function submitPin() {
+      const pin = document.getElementById('pin-input').value.trim();
+      if (!pin) {
+        document.getElementById('pin-error').textContent = 'PIN is required';
+        return;
+      }
+
+      try {
+        await Api.verifyPin(slug, pin);
+        currentPin = pin;
+        const data = await Api.getPublicEvent(slug, pin);
+        loadEvent(data);
+        closePinModal();
+      } catch (err) {
+        document.getElementById('pin-error').textContent = err.message || 'Incorrect PIN';
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('error-text').textContent = message;
+      document.getElementById('error-screen').classList.add('active');
+      document.getElementById('cards-grid').style.display = 'none';
+    }
+
+    async function showAllPhotos() {
+      document.getElementById('gallery-section').style.display = 'block';
+      document.getElementById('cards-grid').style.display = 'none';
+      const grid = document.getElementById('photo-grid');
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color: var(--white-60); padding:2rem;">Loading photos...</div>';
+
+      try {
+        const data = await Api.getEventPhotos(slug, 1, currentPin);
+        if (!data.photos || data.photos.length === 0) {
+          grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color: var(--white-60); padding:2rem;">No photos available yet</div>';
+          return;
+        }
+
+        currentGalleryPhotos = data.photos;
+        grid.innerHTML = '';
+        data.photos.forEach(photo => {
+          const item = document.createElement('div');
+          item.className = 'photo-item';
+          const img = document.createElement('img');
+          img.src = photo.thumb_url;
+          img.alt = photo.filename;
+          item.appendChild(img);
+
+          const overlay = document.createElement('div');
+          overlay.className = 'photo-overlay';
+          
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'photo-btn';
+          viewBtn.innerHTML = '👁 View';
+          viewBtn.onclick = (e) => {
+            e.preventDefault();
+            openPhotoLightbox(photo.full_url, photo.filename);
+          };
+
+          const downloadBtn = document.createElement('button');
+          downloadBtn.className = 'photo-btn';
+          downloadBtn.innerHTML = '⬇ Download';
+          downloadBtn.onclick = (e) => {
+            e.preventDefault();
+            downloadPhoto(photo.full_url, photo.filename);
+          };
+
+          overlay.appendChild(viewBtn);
+          overlay.appendChild(downloadBtn);
+          item.appendChild(overlay);
+          grid.appendChild(item);
+        });
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color: #ff6b6b; padding:2rem;">Error loading photos: ${err.message}</div>`;
+      }
+    }
+
+    function openFaceSearch() {
+      document.getElementById('face-modal').classList.add('active');
+    }
+
+    function closeFaceSearch() {
+      document.getElementById('face-modal').classList.remove('active');
+      stopCamera();
+      resetFaceUI();
+    }
+
+    let stream = null;
+    let selfieBlob = null;
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        });
+        const vid = document.getElementById('camera-video');
+        vid.srcObject = stream;
+        vid.style.display = '';
+        document.getElementById('camera-placeholder').style.display = 'none';
+        document.getElementById('camera-overlay').style.display = 'flex';
+        document.getElementById('btn-capture').style.display = '';
+        document.getElementById('btn-camera').style.display = 'none';
+        document.getElementById('face-error').textContent = '';
+      } catch (err) {
+        let msg = 'Camera access denied. Try uploading a photo instead.';
+        if (err.name === 'NotAllowedError') msg = 'Please allow camera access in your browser settings.';
+        if (err.name === 'NotFoundError') msg = 'No camera found on this device.';
+        document.getElementById('face-error').textContent = msg;
+      }
+    }
+
+    function captureSelfie() {
+      const vid = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      canvas.width = vid.videoWidth;
+      canvas.height = vid.videoHeight;
+      canvas.getContext('2d').drawImage(vid, 0, 0);
+      canvas.toBlob(blob => {
+        selfieBlob = blob;
+        const url = URL.createObjectURL(blob);
+        document.getElementById('selfie-img').src = url;
+        document.getElementById('selfie-preview').style.display = '';
+        document.getElementById('camera-video').style.display = 'none';
+        document.getElementById('camera-overlay').style.display = 'none';
+        document.getElementById('btn-capture').style.display = 'none';
+        document.getElementById('btn-search').style.display = '';
+        stopCamera();
+      }, 'image/jpeg', 0.9);
+    }
+
+    function handleSelfieUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      selfieBlob = file;
+      const url = URL.createObjectURL(file);
+      document.getElementById('selfie-img').src = url;
+      document.getElementById('selfie-preview').style.display = '';
+      document.getElementById('camera-placeholder').style.display = 'none';
+      document.getElementById('camera-video').style.display = 'none';
+      document.getElementById('camera-overlay').style.display = 'none';
+      document.getElementById('btn-capture').style.display = 'none';
+      document.getElementById('btn-camera').style.display = 'none';
+      document.getElementById('btn-search').style.display = '';
+      document.getElementById('face-error').textContent = '';
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+    }
+
+    function resetFaceUI() {
+      selfieBlob = null;
+      document.getElementById('camera-video').style.display = 'none';
+      document.getElementById('camera-placeholder').style.display = 'flex';
+      document.getElementById('camera-overlay').style.display = 'none';
+      document.getElementById('selfie-preview').style.display = 'none';
+      document.getElementById('btn-capture').style.display = 'none';
+      document.getElementById('btn-search').style.display = 'none';
+      document.getElementById('btn-camera').style.display = '';
+      document.getElementById('consent-check').checked = false;
+      document.getElementById('face-error').textContent = '';
+      document.getElementById('face-step-1').style.display = '';
+      document.getElementById('face-step-2').style.display = 'none';
+    }
+
+    async function searchFace() {
+      if (!document.getElementById('consent-check').checked) {
+        document.getElementById('face-error').textContent = 'Please give consent before searching.';
+        return;
+      }
+      if (!selfieBlob) {
+        document.getElementById('face-error').textContent = 'Please capture or upload a selfie first.';
+        return;
+      }
+
+      document.getElementById('face-step-1').style.display = 'none';
+      document.getElementById('face-step-2').style.display = 'flex';
+      document.getElementById('scan-text').textContent = `Searching through ${eventData.photo_count} photos for your face...`;
+
+      try {
+        const result = await Api.findMyPhotos(slug, selfieBlob, currentPin);
+        closeFaceSearch();
+
+        // Show results
+        document.getElementById('gallery-section').style.display = 'block';
+        document.getElementById('cards-grid').style.display = 'none';
+
+        const header = document.querySelector('.gallery-header h2');
+        header.textContent = 'Your Photos';
+        
+        const grid = document.getElementById('photo-grid');
+        grid.innerHTML = '';
+
+        if (!result.photos || result.photos.length === 0) {
+          grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:3rem; color: var(--white-60);">
+            <div style="font-size:3rem; margin-bottom:1rem;">🔍</div>
+            <h3>No matches found</h3>
+            <p>Try a clearer selfie with better lighting</p>
+            <button class="card-btn" onclick="backToOptions()" style="margin-top:1.5rem; display:inline-block;">Try Again</button>
+          </div>`;
+        } else {
+          currentGalleryPhotos = result.photos;
+          result.photos.forEach(photo => {
+            const item = document.createElement('div');
+            item.className = 'photo-item';
+            const img = document.createElement('img');
+            img.src = photo.thumb_url;
+            img.alt = photo.filename;
+            item.appendChild(img);
+
+            const overlay = document.createElement('div');
+            overlay.className = 'photo-overlay';
+            
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'photo-btn';
+            viewBtn.innerHTML = '👁 View';
+            viewBtn.onclick = (e) => {
+              e.preventDefault();
+              openPhotoLightbox(photo.full_url, photo.filename);
+            };
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'photo-btn';
+            downloadBtn.innerHTML = '⬇ Download';
+            downloadBtn.onclick = (e) => {
+              e.preventDefault();
+              downloadPhoto(photo.full_url, photo.filename);
+            };
+
+            overlay.appendChild(viewBtn);
+            overlay.appendChild(downloadBtn);
+            item.appendChild(overlay);
+            grid.appendChild(item);
+          });
+        }
+      } catch (err) {
+        document.getElementById('face-error').textContent = err.message || 'Face search failed';
+        document.getElementById('face-step-1').style.display = '';
+        document.getElementById('face-step-2').style.display = 'none';
+      }
+    }
+
+    function backToOptions() {
+      document.getElementById('gallery-section').style.display = 'none';
+      document.getElementById('cards-grid').style.display = 'grid';
+      resetFaceUI();
+    }
+
+    let currentLightboxImage = null;
+    let currentLightboxName = null;
+    let currentGalleryPhotos = [];
+
+    function openPhotoLightbox(photoUrl, photoName) {
+      currentLightboxImage = photoUrl;
+      currentLightboxName = photoName;
+      document.getElementById('lightbox-image').src = photoUrl;
+      document.getElementById('lightbox-image').alt = photoName;
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = 'auto';
+      currentLightboxImage = null;
+      currentLightboxName = null;
+    }
+
+    async function downloadPhoto(photoUrl, photoName) {
+      try {
+        const response = await fetch(photoUrl);
+        if (!response.ok) throw new Error('Download failed');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = photoName || 'photo.jpg';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (err) {
+        alert('Failed to download photo: ' + err.message);
+      }
+    }
+
+    function downloadLightboxImage() {
+      if (currentLightboxImage && currentLightboxName) {
+        downloadPhoto(currentLightboxImage, currentLightboxName);
+      }
+    }
+
+    async function downloadAllPhotos() {
+      if (!confirm('Download all photos? This may take a moment...')) return;
+
+      const btn = event.currentTarget;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⬇ Downloading...';
+      btn.disabled = true;
+
+      try {
+        const photos = currentGalleryPhotos.length > 0 ? currentGalleryPhotos : [];
+
+        if (photos.length === 0) {
+          alert('No photos to download');
+          return;
+        }
+
+        for (let i = 0; i < photos.length; i++) {
+          const photo = photos[i];
+          await downloadPhoto(photo.full_url, photo.filename);
+          // Add slight delay between downloads to avoid overwhelming the browser
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        alert(`Successfully downloaded ${photos.length} photos!`);
+      } catch (err) {
+        alert('Failed to download photos: ' + err.message);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

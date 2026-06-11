@@ -1,0 +1,13 @@
+===== PROFILE ROUTES =====
+/api/auth/update-profile                           -> ['PUT']
+/api/profile/me                                    -> ['GET']
+/api/profile/me/contact                            -> ['PUT']
+/api/profile/me/about                              -> ['PUT']
+/api/profile/me/photography                        -> ['PUT']
+/api/profile/me/special-photos                     -> ['GET']
+/api/profile/me/special-photos                     -> ['POST']
+/api/profile/me/special-photos/<int:photo_id>      -> ['DELETE']
+/api/profile/<int:photographer_id>                 -> ['GET']
+
+===== ALL CONTACT ROUTES =====
+/api/profile/me/contact                            -> ['PUT']

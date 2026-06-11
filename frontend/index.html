@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapAI — AI-Powered Event Photo Delivery</title>
+  <script>
+    (function() {
+      try {
+        const theme = localStorage.getItem('snapai_theme');
+        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      } catch (err) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/css/main.css" />
+  <style>
+    /* ── Landing Page Specific ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 6rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(212,175,85,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(139,92,246,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 10% 80%, rgba(212,175,85,0.05) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      padding: 0.4rem 1.2rem;
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero h1 {
+      max-width: 900px;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.7s ease both;
+      animation-delay: 0.1s;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      max-width: 560px;
+      font-size: 1.1rem;
+      color: var(--white-60);
+      margin-bottom: 3rem;
+      animation: fadeUp 0.7s ease both;
+      animation-delay: 0.2s;
+    }
+
+    .hero-actions {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.7s ease both;
+      animation-delay: 0.3s;
+    }
+
+    .hero-scroll {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      color: var(--white-30);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: fadeIn 1s ease 1s both;
+    }
+
+    .scroll-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+      animation: scrollPulse 2s ease infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { transform: scaleY(1); opacity: 1; }
+      50%       { transform: scaleY(0.5); opacity: 0.4; }
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 0;
+    }
+
+    .stats-bar-inner {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .stat-item .num {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--gold);
+      display: block;
+    }
+
+    .stat-item .lbl {
+      font-size: 0.82rem;
+      color: var(--white-30);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Features Section ── */
+    .section {
+      padding: 7rem 0;
+    }
+
+    .section-label {
+      font-size: 0.78rem;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .section-title {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 4rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.35s;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--accent));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .feature-card:hover::before { transform: scaleX(1); }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.25rem;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: var(--white);
+    }
+
+    /* ── How It Works ── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 3rem; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+      z-index: 0;
+    }
+
+    .step {
+      text-align: center;
+      padding: 2rem 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-num {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      border: 2px solid var(--border-gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--gold);
+      margin: 0 auto 1.25rem;
+    }
+
+    .step h4 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      color: var(--white);
+    }
+
+    .step p { font-size: 0.85rem; }
+
+    /* ── Dual Audience Section ── */
+    .dual-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .audience-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 3rem 2.5rem;
+      transition: all 0.3s;
+    }
+
+    .audience-card:first-child { border-color: var(--border-gold); }
+    .audience-card:first-child:hover { transform: translateY(-4px); box-shadow: var(--shadow-gold); }
+    .audience-card:last-child:hover { transform: translateY(-4px); }
+
+    .audience-icon { font-size: 3rem; margin-bottom: 1.5rem; display: block; }
+    .audience-card h3 { font-size: 1.6rem; margin-bottom: 0.75rem; }
+
+    .feature-list {
+      list-style: none;
+      margin-top: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--white-60);
+    }
+
+    .feature-list li::before {
+      content: '✦';
+      color: var(--gold);
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      text-align: center;
+      padding: 8rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(212,175,85,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-ring {
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gold);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    .cta-ring:nth-child(2) {
+      width: 600px; height: 600px;
+      border-color: rgba(212,175,85,0.1);
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 0;
+      text-align: center;
+      color: var(--white-30);
+      font-size: 0.85rem;
+    }
+
+    footer .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--white);
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps-grid    { grid-template-columns: 1fr 1fr; }
+      .dual-section  { grid-template-columns: 1fr; }
+      .stats-bar-inner { grid-template-columns: 1fr 1fr; }
+      .section { padding: 4rem 0; }
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        padding: 6rem 1.5rem 4rem;
+        min-height: auto;
+      }
+
+      .hero-eyebrow { font-size: 0.7rem; padding: 0.35rem 1rem; }
+
+      .hero h1 { margin-bottom: 1rem; }
+
+      .hero-sub {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+        max-width: 100%;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+      }
+
+      .hero-scroll { display: none; }
+
+      .stats-bar {
+        padding: 1.5rem 0;
+      }
+
+      .stats-bar-inner {
+        gap: 1rem;
+        padding: 0 1rem;
+      }
+
+      .stat-item .num { font-size: 1.8rem; }
+      .stat-item .lbl { font-size: 0.75rem; }
+
+      .section {
+        padding: 3rem 0;
+      }
+
+      .section-title {
+        margin: 0 auto 2.5rem;
+      }
+
+      .features-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .steps-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .dual-section { grid-template-columns: 1fr; gap: 1.5rem; }
+
+      .feature-card { padding: 1.5rem; }
+      .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+
+      footer { padding: 2rem 1rem; }
+    }
+
+    @media (max-width: 640px) {
+      .hero {
+        padding: 4rem 1rem 3rem;
+        text-align: center;
+      }
+
+      .hero-eyebrow { font-size: 0.65rem; padding: 0.3rem 0.9rem; margin-bottom: 1.5rem; }
+
+      .hero h1 {
+        margin-bottom: 0.75rem;
+      }
+
+      .hero-sub {
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .hero-actions {
+        gap: 0.5rem;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+        padding: 0.55rem 1rem;
+        font-size: 0.8rem;
+      }
+
+      .stats-bar {
+        padding: 1rem 0;
+      }
+
+      .stats-bar-inner {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        padding: 0 0.75rem;
+      }
+
+      .stat-item .num { font-size: 1.5rem; }
+      .stat-item .lbl { font-size: 0.7rem; }
+
+      .section {
+        padding: 2rem 1rem;
+      }
+
+      .section-label { font-size: 0.65rem; margin-bottom: 0.75rem; }
+
+      .section-title {
+        margin: 0 auto 1.5rem;
+      }
+
+      .section-title h2 {
+        font-size: 1.4rem;
+        line-height: 1.2;
+      }
+
+      .features-grid { gap: 0.75rem; }
+      .steps-grid { gap: 0.75rem; }
+      .steps-grid::before { display: none; }
+
+      .feature-card {
+        padding: 1.25rem;
+        border-radius: var(--radius);
+      }
+
+      .feature-icon { font-size: 1.8rem; }
+      .feature-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+
+      footer {
+        padding: 1.5rem 1rem;
+        font-size: 0.8rem;
+      }
+
+      footer .footer-logo { font-size: 1.2rem; }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        padding: 3rem 0.75rem 2rem;
+      }
+
+      .hero h1 {
+        margin-bottom: 0.5rem;
+      }
+
+      .hero-sub {
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .hero-actions {
+        gap: 0.5rem;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+        padding: 0.5rem 0.9rem;
+        font-size: 0.75rem;
+      }
+
+      .stats-bar-inner {
+        gap: 0.5rem;
+      }
+
+      .stat-item .num { font-size: 1.2rem; }
+
+      .section { padding: 1.5rem 0.75rem; }
+
+      .section-title h2 { font-size: 1.2rem; }
+
+      .features-grid { gap: 0.5rem; }
+      .feature-card { padding: 1rem; gap: 0.5rem; }
+      .feature-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+
+      footer { padding: 1rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <div class="logo-icon">📸</div>
+      Snap<span class="gold">AI</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#audience">For Photographers</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="/login" class="btn btn-outline btn-sm">Login</a>
+      <a href="/login#register" class="btn btn-gold btn-sm">Get Started</a>
+    </div>
+    <button class="nav-menu-toggle" id="nav-menu-toggle" aria-label="Toggle menu">☰</button>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-eyebrow">🤖 AI-Powered &nbsp;·&nbsp; Instant Delivery &nbsp;·&nbsp; Professional</div>
+
+  <h1>Your Photos. <em>Found Instantly.</em><br>Delivered Professionally.</h1>
+
+  <p class="hero-sub">
+    The smarter way to deliver event photos. AI facial recognition finds every guest's pictures instantly — no more scrolling through thousands of images.
+  </p>
+
+  <div class="hero-actions">
+    <a href="/login#register" class="btn btn-gold btn-lg">Start Free — For Photographers</a>
+    <a href="#how-it-works" class="btn btn-outline btn-lg">See How It Works</a>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- ── Stats Bar ── -->
+<div class="stats-bar">
+  <div class="stats-bar-inner container">
+    <div class="stat-item">
+      <span class="num">0.3s</span>
+      <span class="lbl">Avg. face match time</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">98%</span>
+      <span class="lbl">Recognition accuracy</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">10K+</span>
+      <span class="lbl">Photos per event</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">100%</span>
+      <span class="lbl">Private & consent-first</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Features ── -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <div class="section-title">
+      <h2>Everything a modern <em>event photographer</em> needs</h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🤳</span>
+        <h3>AI Face Recognition</h3>
+        <p>Guests upload a selfie and instantly receive a personalized gallery of every photo they appear in — even side profiles and group shots.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <h3>Bulk Upload & Indexing</h3>
+        <p>Drag-and-drop thousands of RAW or JPEG photos at once. AI indexes all faces in the background so your gallery is live immediately.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎨</span>
+        <h3>Brand Customization</h3>
+        <p>Add your logo, brand colors, and watermark. Every gallery looks like a premium extension of your photography business.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔒</span>
+        <h3>Access Control</h3>
+        <p>Keep galleries public or protect them with a 4-digit PIN. Only your actual clients and guests can access their photos.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📲</span>
+        <h3>One-Click Share & Download</h3>
+        <p>Guests download full-resolution photos in one tap, or share directly to WhatsApp, Instagram and other platforms.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <h3>Photographer Dashboard</h3>
+        <p>Track all your events, photo counts, indexing progress, and analytics from a beautiful, centralized dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How It Works ── -->
+<section class="section" id="how-it-works" style="background:var(--surface);padding:7rem 0;">
+  <div class="container">
+    <div class="section-label">How It Works</div>
+    <div class="section-title">
+      <h2>From upload to delivery in <em>minutes</em></h2>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Photographer Uploads</h4>
+        <p>Bulk upload thousands of event photos to a branded, secure gallery page.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>AI Indexes Faces</h4>
+        <p>Our AI engine automatically scans and indexes every face in the background.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Guest Takes a Selfie</h4>
+        <p>The guest visits the link and takes a quick selfie or uploads a photo.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Instant Personal Gallery</h4>
+        <p>Their photos are found instantly. Download, share — done.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── For Photographers + Guests ── -->
+<section class="section" id="audience">
+  <div class="container">
+    <div class="section-label">Built For Everyone</div>
+    <div class="section-title">
+      <h2>Professional tools. <em>Effortless experience.</em></h2>
+    </div>
+
+    <div class="dual-section">
+      <div class="audience-card">
+        <span class="audience-icon">📷</span>
+        <h3>For Photographers</h3>
+        <p>Elevate your brand with a platform that matches your professionalism.</p>
+        <ul class="feature-list">
+          <li>Drag-and-drop bulk photo uploader</li>
+          <li>Separate event albums & management</li>
+          <li>Automated background AI indexing</li>
+          <li>Custom branding, logo & watermark</li>
+          <li>PIN-protected private galleries</li>
+          <li>Real-time indexing progress tracking</li>
+        </ul>
+        <a href="/login#register" class="btn btn-gold" style="margin-top:2rem;">Get Started Free</a>
+      </div>
+
+      <div class="audience-card">
+        <span class="audience-icon">🎉</span>
+        <h3>For Guests & Clients</h3>
+        <p>Find your photos in seconds, not hours.</p>
+        <ul class="feature-list">
+          <li>Selfie-powered instant photo discovery</li>
+          <li>Full-resolution downloads in one click</li>
+          <li>Direct sharing to WhatsApp, Instagram</li>
+          <li>Browse complete gallery alternatively</li>
+          <li>Privacy-first with explicit consent</li>
+          <li>Works perfectly on mobile browsers</li>
+        </ul>
+        <a href="#how-it-works" class="btn btn-outline" style="margin-top:2rem;">See Demo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="cta-ring"></div>
+  <div class="cta-ring"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="section-label">Ready to Start?</div>
+    <h2 style="max-width:600px;margin:0 auto 1.5rem;">Transform your photo delivery.<br><em>Start today.</em></h2>
+    <p style="max-width:480px;margin:0 auto 2.5rem;font-size:1rem;">Join photographers who are delivering a premium, AI-powered experience to their clients and guests.</p>
+    <a href="/login#register" class="btn btn-gold btn-lg">Create Your Free Account</a>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="footer-logo">Snap<span style="color:var(--gold)">AI</span></div>
+    <p>AI-powered event photo delivery platform</p>
+    <p style="margin-top:1rem;">© 2026 SnapAI. All rights reserved.</p>
+  </div>
+</footer>
+
+<div id="toast-container"></div>
+<script src="/js/api.js"></script>
+<script>
+  // Mobile Menu Toggle
+  function setupMobileMenu() {
+    const toggle = document.getElementById('nav-menu-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    const navCta = document.querySelector('.nav-cta');
+    
+    if (!toggle) return;
+    
+    toggle.addEventListener('click', () => {
+      navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+      navCta.style.display = navCta.style.display === 'flex' ? 'none' : 'flex';
+    });
+    
+    // Close menu when clicking nav links
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.style.display = 'none';
+        navCta.style.display = 'none';
+      });
+    });
+    
+    // Close menu on resize if screen is large
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        navLinks.style.display = 'flex';
+        navCta.style.display = 'flex';
+      }
+    });
+  }
+  
+  // Navbar scroll effect
+  function setupNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+  }
+  
+  // Initialize mobile menu on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    setupMobileMenu();
+    setupNavbarScroll();
+  });
+
+  // Auth Guard - Redirect logged-in users to dashboard only
+  // New users (no token) stay on landing page
+  console.log('[DEBUG] Landing page loaded');
+  
+  try {
+    const token = Api.getToken();
+    console.log('[DEBUG] Token check:', token ? 'Found' : 'Not found');
+    
+    if (token) {
+      console.log('[DEBUG] User already logged in, redirecting to dashboard');
+      // Add a small delay to ensure all scripts are loaded
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100);
+    } else {
+      console.log('[DEBUG] New user, showing landing page');
+      // Landing page visible - new users see this
+    }
+  } catch (err) {
+    console.error('[ERROR] Auth check failed:', err);
+    // On error, show landing page to new users
+  }
+</script>
+</body>
+</html>
