@@ -4,7 +4,7 @@
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 snapai/
@@ -38,7 +38,7 @@ snapai/
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 | Tool    | Version  |
 |---------|----------|
@@ -49,7 +49,7 @@ snapai/
 
 ---
 
-## 🚀 Setup Instructions
+## Setup Instructions
 
 ### 1. Clone / Extract the project
 
@@ -87,7 +87,7 @@ source venv/bin/activate      # Linux/macOS
 pip install -r requirements.txt
 ```
 
-> ⚠️ `face-recognition` installs `dlib` which takes 5–15 minutes to compile. Be patient!
+> `face-recognition` installs `dlib` which takes 5–15 minutes to compile. Be patient!
 
 ### 5. Set environment variables (optional)
 
@@ -112,7 +112,7 @@ Server starts at: **http://localhost:5000**
 
 ---
 
-## 🎯 Usage Guide
+## Usage Guide
 
 ### For Photographers
 
@@ -133,7 +133,7 @@ Server starts at: **http://localhost:5000**
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Auth
 | Method | Endpoint | Description |
@@ -175,7 +175,7 @@ Server starts at: **http://localhost:5000**
 
 ---
 
-## 🛠️ Configuration Reference (`config.py`)
+## Configuration Reference (`config.py`)
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -186,7 +186,7 @@ Server starts at: **http://localhost:5000**
 
 ---
 
-## 🚢 Production Deployment
+## Production Deployment
 
 ```bash
 # Install gunicorn
@@ -208,7 +208,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
 ---
 
-## 📱 Mobile Support
+## Mobile Support
 
 The guest gallery (`gallery.html`) is fully mobile-optimized:
 - Responsive grid layout
@@ -218,7 +218,7 @@ The guest gallery (`gallery.html`) is fully mobile-optimized:
 
 ---
 
-## 🔐 Privacy & Consent
+## Privacy & Consent
 
 - Guests must explicitly check a consent checkbox before face scanning
 - Selfies are processed in-memory and **not stored** on disk
@@ -227,7 +227,7 @@ The guest gallery (`gallery.html`) is fully mobile-optimized:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
@@ -239,7 +239,7 @@ The guest gallery (`gallery.html`) is fully mobile-optimized:
 
 ---
 
-## 👨‍💻 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -251,4 +251,4 @@ The guest gallery (`gallery.html`) is fully mobile-optimized:
 
 ---
 
-*Built with ❤️ — SnapAI © 2026*
+*Built with — SnapAI © 2026*
