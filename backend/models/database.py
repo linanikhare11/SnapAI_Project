@@ -12,8 +12,7 @@ class Photographer(db.Model):
     name        = db.Column(db.String(120), nullable=False)
     email       = db.Column(db.String(120), unique=True, nullable=False)
     password    = db.Column(db.String(256), nullable=False)
-    logo_path   = db.Column(db.String(256), nullable=True)   # Cloudinary secure URL
-    logo_public_id = db.Column(db.String(512), nullable=True) # Cloudinary public_id for deletion
+    logo_path   = db.Column(db.String(256), nullable=True)
     brand_color = db.Column(db.String(10), default='#6C63FF')
     watermark   = db.Column(db.String(120), nullable=True)
     
@@ -79,8 +78,7 @@ class Photographer(db.Model):
             'name':        self.name,
             'email':       self.email,
             'mobile_number': self.mobile_number,
-            'logo_path':   self.logo_path,       # Cloudinary secure URL
-            'logo_public_id': self.logo_public_id,
+            'logo_path':   self.logo_path,
             'brand_color': self.brand_color,
             'watermark':   self.watermark,
             'specializations': self.get_specializations(),
@@ -139,9 +137,7 @@ class Photo(db.Model):
     event_id        = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
     filename        = db.Column(db.String(256), nullable=False)
     original_name   = db.Column(db.String(256), nullable=False)
-    thumbnail_path  = db.Column(db.String(512), nullable=True)  # Cloudinary thumbnail URL
-    cloudinary_url  = db.Column(db.String(512), nullable=True)  # Cloudinary full-res URL
-    cloudinary_public_id = db.Column(db.String(512), nullable=True)  # For deletion
+    thumbnail_path  = db.Column(db.String(256), nullable=True)
     file_size       = db.Column(db.Integer, nullable=True)
     face_encodings  = db.Column(db.Text, nullable=True)   # JSON array of face encodings
     face_count      = db.Column(db.Integer, default=0)
@@ -168,17 +164,15 @@ class Photo(db.Model):
 
     def to_dict(self):
         return {
-            'id':                  self.id,
-            'event_id':            self.event_id,
-            'filename':            self.filename,
-            'original_name':       self.original_name,
-            'thumbnail_path':      self.thumbnail_path,      # Cloudinary thumbnail URL
-            'cloudinary_url':      self.cloudinary_url,      # Cloudinary full-res URL
-            'cloudinary_public_id': self.cloudinary_public_id,
-            'file_size':           self.file_size,
-            'face_count':          self.face_count,
-            'is_processed':        self.is_processed,
-            'uploaded_at':         self.uploaded_at.isoformat()
+            'id':             self.id,
+            'event_id':       self.event_id,
+            'filename':       self.filename,
+            'original_name':  self.original_name,
+            'thumbnail_path': self.thumbnail_path,
+            'file_size':      self.file_size,
+            'face_count':     self.face_count,
+            'is_processed':   self.is_processed,
+            'uploaded_at':    self.uploaded_at.isoformat()
         }
 
 
@@ -201,20 +195,7 @@ def ensure_schema(app):
             'technologies': 'TEXT',
             'special_photos': 'TEXT',
             'profile_chat_messages': 'TEXT',
-            'logo_public_id': 'VARCHAR(512)',
         }
-
-        # Migrate photos table
-        if 'photos' in tables:
-            photos_columns = {col['name'] for col in inspector.get_columns('photos')}
-            photos_required = {
-                'cloudinary_url': 'VARCHAR(512)',
-                'cloudinary_public_id': 'VARCHAR(512)',
-            }
-            for col_name, col_type in photos_required.items():
-                if col_name not in photos_columns:
-                    db.session.execute(text(f'ALTER TABLE photos ADD COLUMN {col_name} {col_type}'))
-            db.session.commit()
 
         missing_columns = [
             (column_name, column_type)

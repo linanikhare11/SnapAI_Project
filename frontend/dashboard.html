@@ -34,23 +34,23 @@
     </div>
     <ul class="sidebar-nav">
       <li><a href="#" class="active" data-tab="overview" onclick="switchSection('overview',this)">
-        <span class="icon">📊</span> Overview
+        <span class="icon"></span> Overview
       </a></li>
       <li><a href="#" data-tab="events" onclick="switchSection('events',this)">
-        <span class="icon">📁</span> My Events
+        <span class="icon"></span> My Events
       </a></li>
       <li><a href="#" data-tab="upload" onclick="switchSection('upload',this)">
-        <span class="icon">⬆</span> Upload Photos
+        <span class="icon"></span> Upload Photos
       </a></li>
       <li><a href="#" data-tab="profile" onclick="switchSection('profile',this)">
-        <span class="icon">👤</span> My Profile
+        <span class="icon"></span> My Profile
       </a></li>
       <li><a href="#" data-tab="settings" onclick="switchSection('settings',this)">
-        <span class="icon">⚙</span> Settings
+        <span class="icon"></span> Settings
       </a></li>
       <li style="margin-top:auto;padding-top:2rem;">
         <a href="/" onclick="">
-          <span class="icon">🏠</span> View Site
+          <span class="icon"></span> View Site
         </a>
       </li>
     </ul>
@@ -73,7 +73,7 @@
     <section id="section-overview" class="dash-section">
       <div class="dash-header">
         <div>
-          <h1>Good morning 👋</h1>
+          <h1>Good morning </h1>
           <div class="dash-title-sub" id="overview-sub">Your photography business at a glance</div>
         </div>
         <button class="btn btn-gold" onclick="openCreateEvent()">+ New Event</button>
@@ -84,25 +84,25 @@
           <div class="stat-label">Total Events</div>
           <div class="stat-value" id="stat-events">—</div>
           <div class="stat-desc">Active galleries</div>
-          <span class="stat-icon">📁</span>
+          <span class="stat-icon"></span>
         </div>
         <div class="stat-card fade-up delay-1">
           <div class="stat-label">Total Photos</div>
           <div class="stat-value" id="stat-photos">—</div>
           <div class="stat-desc">Across all events</div>
-          <span class="stat-icon">🖼</span>
+          <span class="stat-icon"></span>
         </div>
         <div class="stat-card fade-up delay-2">
           <div class="stat-label">Indexed</div>
           <div class="stat-value" id="stat-indexed">—</div>
           <div class="stat-desc">AI-ready galleries</div>
-          <span class="stat-icon">🤖</span>
+          <span class="stat-icon"></span>
         </div>
         <div class="stat-card fade-up delay-3">
           <div class="stat-label">Storage</div>
           <div class="stat-value" id="stat-storage">—</div>
           <div class="stat-desc">Photos uploaded</div>
-          <span class="stat-icon">💾</span>
+          <span class="stat-icon"></span>
         </div>
       </div>
 
@@ -112,7 +112,7 @@
       </div>
       <div class="events-grid" id="recent-events-grid">
         <div class="empty-state" id="overview-empty" style="display:none;grid-column:1/-1;">
-          <div class="icon">📷</div>
+          <div class="icon"></div>
           <h3>No events yet</h3>
           <p>Create your first event to get started</p>
           <button class="btn btn-gold" style="margin-top:1.5rem;" onclick="openCreateEvent()">Create Event</button>
@@ -135,7 +135,7 @@
         <input 
           type="text" 
           id="event-search-input" 
-          placeholder="🔍 Search events by name..." 
+          placeholder=" Search events by name..." 
           class="event-search-input"
           onkeyup="filterEvents()"
         />
@@ -143,7 +143,7 @@
 
       <div class="events-grid" id="all-events-grid">
         <div class="empty-state" id="events-empty" style="display:none;grid-column:1/-1;">
-          <div class="icon">📁</div>
+          <div class="icon"></div>
           <h3>No events yet</h3>
           <p>Create your first event gallery</p>
           <button class="btn btn-gold" style="margin-top:1.5rem;" onclick="openCreateEvent()">Create Event</button>
@@ -185,7 +185,7 @@
 
           <div class="upload-zone" id="upload-zone">
             <input type="file" multiple accept="image/*" id="file-input" onchange="handleFiles(this.files)" />
-            <div class="upload-icon">📁</div>
+            <div class="upload-icon"></div>
             <p><strong>Drag & drop photos here</strong></p>
             <p>or click to browse files</p>
             <p class="upload-hint">JPG, PNG, WEBP · Up to 500 MB total · Unlimited files</p>
@@ -263,7 +263,7 @@
             <label>Mobile Number</label>
             <input type="tel" id="profile-mobile" placeholder="+91-XXXXXXXXXX" />
           </div>
-          <button class="btn btn-gold" onclick="saveContactInfo()">💾 Save Contact Info</button>
+          <button class="btn btn-gold" onclick="saveContactInfo()"> Save Contact Info</button>
         </div>
       </div>
 
@@ -490,7 +490,7 @@
       
       <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
         <button type="button" class="btn btn-ghost" onclick="closeEditEventModal()">Cancel</button>
-        <button type="submit" class="btn btn-gold">💾 Save Changes</button>
+        <button type="submit" class="btn btn-gold"> Save Changes</button>
       </div>
     </form>
   </div>

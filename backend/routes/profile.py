@@ -4,12 +4,7 @@ Photographer Profile Routes — Contact Info & Portfolio Management
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.database import db, Photographer, Photo, Event
-from services.upload_service import allowed_file
-from services.cloudinary_service import (
-    upload_logo,
-    upload_portfolio_photo,
-    delete_cloudinary_asset,
-)
+from services.upload_service import save_uploaded_photo, generate_thumbnail, allowed_file
 import json
 from datetime import datetime
 
@@ -171,6 +166,7 @@ def upload_special_photos():
         db.session.add(portfolio_event)
         db.session.flush()
 
+    upload_folder = current_app.config['UPLOAD_FOLDER']
     uploaded_photos = []
     special_photo_ids = photographer.get_special_photos()
 
@@ -178,17 +174,15 @@ def upload_special_photos():
         if not file or not allowed_file(file.filename):
             continue
 
-        # Upload to Cloudinary
-        result = upload_portfolio_photo(file.stream, file.filename, photographer_id)
+        saved = save_uploaded_photo(file, upload_folder, portfolio_event.id)
+        thumb = generate_thumbnail(saved['path'], upload_folder, portfolio_event.id, saved['filename'])
 
         photo = Photo(
             event_id=portfolio_event.id,
-            filename=result['filename'],
-            original_name=result['original_name'],
-            thumbnail_path=result['thumbnail_url'],
-            cloudinary_url=result['url'],
-            cloudinary_public_id=result['public_id'],
-            file_size=result['file_size'],
+            filename=saved['filename'],
+            original_name=saved['original_name'],
+            thumbnail_path=thumb,
+            file_size=saved['file_size'],
             is_processed=False
         )
         db.session.add(photo)
