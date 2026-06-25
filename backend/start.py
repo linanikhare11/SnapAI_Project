@@ -7,11 +7,15 @@ import os
 import sys
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Setup path
 backend_dir = Path(__file__).parent
 frontend_dir = backend_dir.parent / 'frontend'
 sys.path.insert(0, str(backend_dir))
+
+# Load .env so DATABASE_URL (Neon) and other secrets are available
+load_dotenv(backend_dir / '.env')
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,11 +33,22 @@ app = Flask(__name__, static_folder=str(frontend_dir), static_url_path='')
 
 # Basic config
 os.environ.setdefault('FLASK_ENV', 'production')
-app.config['SECRET_KEY'] = 'snapai-secret-key'
-app.config['JWT_SECRET_KEY'] = 'jwt-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{backend_dir}/snapai.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'snapai-secret-key')
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key')
+
+# ── Database: prefer Neon (DATABASE_URL from .env), fall back to local SQLite ──
+_db_url = os.environ.get('DATABASE_URL', f'sqlite:///{backend_dir}/snapai.db')
+if _db_url.startswith('postgres://'):
+    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+}
 app.config['UPLOAD_FOLDER'] = str(backend_dir / 'uploads')
+
+logger.info(f"Database: {_db_url[:60]}...")
 
 logger.info("Initializing extensions...")
 # Configure CORS with proper support for Authorization headers and FormData

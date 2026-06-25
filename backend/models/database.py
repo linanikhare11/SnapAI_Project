@@ -133,16 +133,18 @@ class Event(db.Model):
 class Photo(db.Model):
     __tablename__ = 'photos'
 
-    id              = db.Column(db.Integer, primary_key=True)
-    event_id        = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
-    filename        = db.Column(db.String(256), nullable=False)
-    original_name   = db.Column(db.String(256), nullable=False)
-    thumbnail_path  = db.Column(db.String(256), nullable=True)
-    file_size       = db.Column(db.Integer, nullable=True)
-    face_encodings  = db.Column(db.Text, nullable=True)   # JSON array of face encodings
-    face_count      = db.Column(db.Integer, default=0)
-    is_processed    = db.Column(db.Boolean, default=False)
-    uploaded_at     = db.Column(db.DateTime, default=datetime.utcnow)
+    id                    = db.Column(db.Integer, primary_key=True)
+    event_id              = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    filename              = db.Column(db.String(256), nullable=False)
+    original_name         = db.Column(db.String(256), nullable=False)
+    thumbnail_path        = db.Column(db.String(512), nullable=True)   # Cloudinary thumbnail URL
+    cloudinary_url        = db.Column(db.String(512), nullable=True)   # Full Cloudinary delivery URL
+    cloudinary_public_id  = db.Column(db.String(256), nullable=True)   # Cloudinary asset ID (for deletion/transforms)
+    file_size             = db.Column(db.Integer, nullable=True)
+    face_encodings        = db.Column(db.Text, nullable=True)          # JSON array of face encodings
+    face_count            = db.Column(db.Integer, default=0)
+    is_processed          = db.Column(db.Boolean, default=False)
+    uploaded_at           = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_face_encodings(self):
         """
@@ -164,51 +166,60 @@ class Photo(db.Model):
 
     def to_dict(self):
         return {
-            'id':             self.id,
-            'event_id':       self.event_id,
-            'filename':       self.filename,
-            'original_name':  self.original_name,
-            'thumbnail_path': self.thumbnail_path,
-            'file_size':      self.file_size,
-            'face_count':     self.face_count,
-            'is_processed':   self.is_processed,
-            'uploaded_at':    self.uploaded_at.isoformat()
+            'id':                   self.id,
+            'event_id':             self.event_id,
+            'filename':             self.filename,
+            'original_name':        self.original_name,
+            'thumbnail_path':       self.thumbnail_path,
+            'cloudinary_url':       self.cloudinary_url,
+            'cloudinary_public_id': self.cloudinary_public_id,
+            'file_size':            self.file_size,
+            'face_count':           self.face_count,
+            'is_processed':         self.is_processed,
+            'uploaded_at':          self.uploaded_at.isoformat()
         }
 
 
 def ensure_schema(app):
-    """Bring an existing SQLite database up to date without dropping data."""
+    """
+    Bring an existing database schema up to date without dropping data.
+    Works with both SQLite (dev) and PostgreSQL (production / Neon).
+    Adds any columns that are defined in the ORM models but missing from
+    the live database tables.
+    """
     with app.app_context():
-        if db.engine.dialect.name != 'sqlite':
-            return
-
         inspector = inspect(db.engine)
         tables = set(inspector.get_table_names())
-        if 'photographers' not in tables:
-            return
 
-        existing_columns = {column['name'] for column in inspector.get_columns('photographers')}
-        required_columns = {
-            'mobile_number': 'VARCHAR(20)',
-            'specializations': 'TEXT',
-            'services': 'TEXT',
-            'technologies': 'TEXT',
-            'special_photos': 'TEXT',
-            'profile_chat_messages': 'TEXT',
-        }
+        # ── photographers table ────────────────────────────────────────────
+        if 'photographers' in tables:
+            existing_cols = {col['name'] for col in inspector.get_columns('photographers')}
+            required_cols = {
+                'mobile_number':        'VARCHAR(20)',
+                'specializations':      'TEXT',
+                'services':             'TEXT',
+                'technologies':         'TEXT',
+                'special_photos':       'TEXT',
+                'profile_chat_messages':'TEXT',
+            }
+            for col_name, col_type in required_cols.items():
+                if col_name not in existing_cols:
+                    db.session.execute(
+                        text(f'ALTER TABLE photographers ADD COLUMN {col_name} {col_type}')
+                    )
 
-        missing_columns = [
-            (column_name, column_type)
-            for column_name, column_type in required_columns.items()
-            if column_name not in existing_columns
-        ]
-
-        if not missing_columns:
-            return
-
-        for column_name, column_type in missing_columns:
-            db.session.execute(
-                text(f'ALTER TABLE photographers ADD COLUMN {column_name} {column_type}')
-            )
+        # ── photos table (Cloudinary columns) ─────────────────────────────
+        if 'photos' in tables:
+            existing_cols = {col['name'] for col in inspector.get_columns('photos')}
+            required_cols = {
+                'cloudinary_url':       'VARCHAR(512)',
+                'cloudinary_public_id': 'VARCHAR(256)',
+            }
+            for col_name, col_type in required_cols.items():
+                if col_name not in existing_cols:
+                    db.session.execute(
+                        text(f'ALTER TABLE photos ADD COLUMN {col_name} {col_type}')
+                    )
 
         db.session.commit()
+
