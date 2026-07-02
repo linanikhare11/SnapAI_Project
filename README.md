@@ -9,9 +9,10 @@
 ```
 snapai/
 ├── backend/
-│   ├── app.py                  # Flask entry point
+│   ├── app.py                  # Flask entry point (sync route loading + face_recognition preload)
 │   ├── config.py               # Configuration & settings
 │   ├── requirements.txt        # Python dependencies
+│   ├── requirements_fixed.txt   # Alternate dependency snapshot
 │   ├── models/
 │   │   └── database.py         # SQLAlchemy ORM models
 │   ├── routes/
@@ -20,13 +21,14 @@ snapai/
 │   │   ├── photos.py           # Upload, indexing, serving photos
 │   │   └── guest.py            # Public gallery + AI face search
 │   └── services/
+│       ├── cloudinary_service.py # Cloud storage integration
 │       ├── face_service.py     # Face detection & matching (face_recognition)
 │       └── upload_service.py   # File saving, thumbnail generation, watermark
 └── frontend/
     ├── index.html              # Landing page
     ├── login.html              # Photographer login/register
     ├── dashboard.html          # Photographer admin dashboard
-    ├── gallery.html            # Guest-facing event gallery
+    ├── gallery_final.html      # Guest-facing event gallery served by /gallery/<slug>
     ├── css/
     │   ├── main.css            # Global styles (luxury dark editorial theme)
     │   ├── dashboard.css       # Dashboard-specific styles
@@ -35,6 +37,13 @@ snapai/
         ├── api.js              # API client + toast system
         └── dashboard.js        # Dashboard logic
 ```
+
+## Current Runtime
+
+- The recommended launcher from the repository root is `python start.py`.
+- That launcher changes into `snapai/backend` and imports `app` from `app.py`.
+- `snapai/backend/app.py` registers all API routes synchronously and preloads `face_recognition` at startup.
+- The guest gallery route serves `gallery_final.html`, not `gallery.html`.
 
 ---
 
@@ -109,6 +118,12 @@ python app.py
 ```
 
 Server starts at: **http://localhost:5000**
+
+If you are running from the repository root, use:
+
+```bash
+python start.py
+```
 
 ---
 
@@ -210,7 +225,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
 ## Mobile Support
 
-The guest gallery (`gallery.html`) is fully mobile-optimized:
+The guest gallery (`gallery_final.html`) is fully mobile-optimized:
 - Responsive grid layout
 - Camera access via `getUserMedia` for selfie capture
 - Touch-friendly interface
